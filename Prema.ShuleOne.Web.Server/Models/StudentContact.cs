@@ -22,4 +22,13 @@ namespace Prema.ShuleOne.Web.Server.Models
         public Student Student { get; set; }
 
     }
+
+    public class StudentContactDto : PersonDto
+    {
+        public byte contact_priority { get; set; }
+        public string phone_number { get; set; }
+        public string? email { get; set; }
+        public string? occupation { get; set; }
+        public Relationship relationship { get; set; }
+    }
 }

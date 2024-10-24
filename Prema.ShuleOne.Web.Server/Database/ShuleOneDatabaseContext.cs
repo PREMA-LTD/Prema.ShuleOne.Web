@@ -57,6 +57,8 @@ namespace Prema.ShuleOne.Web.Backend.Database
         public DbSet<StudentContact> StudentContact { get; set; }
         public DbSet<Subject> Subject { get; set; }
         public DbSet<Teacher> Teacher { get; set; }
+        public DbSet<SMSRecord> SMSRecord { get; set; }
+        public DbSet<SMSFailure> SMSFailure { get; set; }
     }
 
 }

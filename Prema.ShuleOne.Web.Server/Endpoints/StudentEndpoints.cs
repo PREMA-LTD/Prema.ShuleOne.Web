@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
 using Prema.ShuleOne.Web.Backend.Database;
 using Prema.ShuleOne.Web.Server.Models;
+using Prema.ShuleOne.Web.Backend.BulkSms;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 
 public static class StudentEndpoints
@@ -63,6 +64,87 @@ public static class StudentEndpoints
             return TypedResults.Created($"/api/Student/{student.id}",student);
         })
         .WithName("CreateStudent")
+        .WithOpenApi();
+
+        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa) =>
+        {
+            Student student = new Student()
+            {
+                id = studentDto.id,
+                surname = studentDto.surname,
+                other_names = studentDto.other_names,
+                date_created = studentDto.date_created,
+                date_updated = studentDto.date_updated,
+                fk_created_by = studentDto.fk_created_by,
+                gender = studentDto.gender,
+                village_or_estate = studentDto.village_or_estate,
+                fk_residence_ward_id = studentDto.fk_residence_ward_id,
+                current_grade = studentDto.current_grade,
+                date_of_admission = studentDto.date_of_admission,
+                upi = studentDto.upi,
+                assessment_no = studentDto.assessment_no,
+                birth_cert_entry_no = studentDto.birth_cert_entry_no,
+                medical_needs = studentDto.medical_needs,
+                date_of_birth = studentDto.date_of_birth
+            };
+            db.Student.Add(student);
+            await db.SaveChangesAsync();
+
+            StudentContact primaryContact = new StudentContact()
+            {
+                id = studentDto.primary_contact.id,
+                surname = studentDto.primary_contact.surname,
+                other_names = studentDto.primary_contact.other_names,
+                date_created = studentDto.primary_contact.date_created,
+                date_updated = studentDto.primary_contact.date_updated,
+                fk_created_by = studentDto.primary_contact.fk_created_by,
+                gender = studentDto.primary_contact.gender,
+                village_or_estate = studentDto.primary_contact.village_or_estate,
+                fk_residence_ward_id = studentDto.primary_contact.fk_residence_ward_id,
+                contact_priority = 1,
+                phone_number = studentDto.primary_contact.phone_number,
+                email = studentDto.primary_contact.email,
+                occupation = studentDto.primary_contact.occupation,
+                relationship = studentDto.primary_contact.relationship,
+                fk_student_id = student.id
+            };
+            db.StudentContact.Add(primaryContact);
+
+            if(studentDto.secondary_contact != null)
+            {
+                StudentContact secondaryContact = new StudentContact()
+                {
+                    id = studentDto.secondary_contact.id,
+                    surname = studentDto.secondary_contact.surname,
+                    other_names = studentDto.secondary_contact.other_names,
+                    date_created = studentDto.secondary_contact.date_created,
+                    date_updated = studentDto.secondary_contact.date_updated,
+                    fk_created_by = studentDto.secondary_contact.fk_created_by,
+                    gender = studentDto.secondary_contact.gender,
+                    village_or_estate = studentDto.secondary_contact.village_or_estate,
+                    fk_residence_ward_id = studentDto.secondary_contact.fk_residence_ward_id,
+                    contact_priority = 2,
+                    phone_number = studentDto.secondary_contact.phone_number,
+                    email = studentDto.secondary_contact.email,
+                    occupation = studentDto.secondary_contact.occupation,
+                    relationship = studentDto.secondary_contact.relationship,
+                    fk_student_id = student.id
+                };
+                db.StudentContact.Add(secondaryContact);
+            }
+
+            await db.SaveChangesAsync();
+
+            //send message to parent/guardian
+            string parentName = $"{primaryContact.other_names} {primaryContact.surname}";
+            string childName = $"{student.other_names} {student.surname}";
+            string message = $"Dear {parentName}, we are pleased to inform you that your child, {childName}, has been successfully admitted to Lifeway Christian Academy. Their admission number is {student.id}. We look forward to a fruitful and exciting learning journey together.";
+            
+            await mobileSasa.SendSms(primaryContact.phone_number, parentName, message);
+
+            return TypedResults.Created($"/api/Student/{student.id}", student);
+        })
+        .WithName("AdmitStudent")
         .WithOpenApi();
 
         group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (int id, ShuleOneDatabaseContext db) =>
