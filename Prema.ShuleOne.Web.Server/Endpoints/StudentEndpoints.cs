@@ -68,13 +68,14 @@ public static class StudentEndpoints
 
         group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa) =>
         {
+            DateTime currentDateTime = DateTime.UtcNow;
             Student student = new Student()
             {
                 id = studentDto.id,
                 surname = studentDto.surname,
                 other_names = studentDto.other_names,
-                date_created = studentDto.date_created,
-                date_updated = studentDto.date_updated,
+                date_created = currentDateTime,
+                date_updated = currentDateTime,
                 fk_created_by = studentDto.fk_created_by,
                 gender = studentDto.gender,
                 village_or_estate = studentDto.village_or_estate,
@@ -95,8 +96,8 @@ public static class StudentEndpoints
                 id = studentDto.primary_contact.id,
                 surname = studentDto.primary_contact.surname,
                 other_names = studentDto.primary_contact.other_names,
-                date_created = studentDto.primary_contact.date_created,
-                date_updated = studentDto.primary_contact.date_updated,
+                date_created = currentDateTime,
+                date_updated = currentDateTime,
                 fk_created_by = studentDto.primary_contact.fk_created_by,
                 gender = studentDto.primary_contact.gender,
                 village_or_estate = studentDto.primary_contact.village_or_estate,
@@ -117,8 +118,8 @@ public static class StudentEndpoints
                     id = studentDto.secondary_contact.id,
                     surname = studentDto.secondary_contact.surname,
                     other_names = studentDto.secondary_contact.other_names,
-                    date_created = studentDto.secondary_contact.date_created,
-                    date_updated = studentDto.secondary_contact.date_updated,
+                    date_created = currentDateTime,
+                    date_updated = currentDateTime,
                     fk_created_by = studentDto.secondary_contact.fk_created_by,
                     gender = studentDto.secondary_contact.gender,
                     village_or_estate = studentDto.secondary_contact.village_or_estate,

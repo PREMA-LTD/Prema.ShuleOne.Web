@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Prema.ShuleOne.Web.Backend.BulkSms;
 using Prema.ShuleOne.Web.Backend.Database;
+using Prema.ShuleOne.Web.Server.AppSettings;
+using Prema.ShuleOne.Web.Server.BulkSms;
 using Prema.ShuleOne.Web.Server.Endpoints;
+using Prema.ShuleOne.Web.Server.Logging;
+using Prema.ShuleOne.Web.Server.Telegram;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +28,13 @@ builder.Services.AddDbContext<ShuleOneDatabaseContext>(
         .EnableDetailedErrors()
 );
 
+
+builder.Services.AddSingleton<IBulkSms, MobileSasa>();
+builder.Services.Configure<MobileSasaSettings>(builder.Configuration.GetSection("MobileSasa"));
+builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection("TelegramBot"));
+builder.Services.AddSingleton<TelegramBot>();
+builder.Services.AddSingleton<Logger>();
+
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
@@ -38,26 +50,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
 
 app.MapFallbackToFile("/index.html");
 
