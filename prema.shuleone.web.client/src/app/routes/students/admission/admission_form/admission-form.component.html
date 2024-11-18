@@ -1,0 +1,202 @@
+<!-- student-registration.component.html -->
+<div class="min-h-screen bg-gray-50 p-8">
+  <mat-card class="max-w-2xl mx-auto">
+    <mat-card-header>
+      <mat-card-title class="w-full text-center text-2xl font-bold text-gray-800 mb-8">
+        Student Registration
+      </mat-card-title>
+    </mat-card-header>
+
+    <!-- Step Indicator -->
+    <div class="stepper-container">
+      <ng-container *ngFor="let step of steps; let i = index">
+        <div class="step-wrapper">
+          <div [class]="getStepClass(step)"></div>
+          <div *ngIf="i < steps.length - 1" 
+               [class]="getLineClass(i)">
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <mat-card-content>
+      <div class="step-container">
+        <!-- Step 1: Student Details -->
+        <div class="step-content" *ngIf="currentStep === 1" [@stepTransition]>
+          <h3 class="text-lg font-semibold mb-6 text-gray-700">Student Details</h3>
+          <form [formGroup]="studentForm" class="flex flex-col gap-4">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Surname</mat-label>
+            <input matInput formControlName="fullName" placeholder="Enter full name">
+            <mat-error *ngIf="studentForm.get('fullName')?.errors?.['required']">
+              Full name is required
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>First Name</mat-label>
+            <input matInput formControlName="fullName" placeholder="Enter full name">
+            <mat-error *ngIf="studentForm.get('fullName')?.errors?.['required']">
+              Full name is required
+            </mat-error>
+          </mat-form-field>    
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Grade</mat-label>
+            <mat-select formControlName="grade">
+              <mat-option [value]="grade.value" *ngFor="let grade of grades">
+                {{grade.name}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="studentForm.get('grade')?.errors?.['required']">
+              Grade is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Date of Birth</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="dob">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-error *ngIf="studentForm.get('dob')?.errors?.['required']">
+              Date of birth is required
+            </mat-error>
+          </mat-form-field>
+
+          
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Birth Certificate Entry Number</mat-label>
+            <input matInput formControlName="contactNumber" placeholder="Enter phone number">
+            <mat-error *ngIf="studentForm.get('contactNumber')?.errors?.['required']">
+              Contact number is required
+            </mat-error>
+          </mat-form-field>
+
+          
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>UPI Number</mat-label>
+            <input matInput formControlName="contactNumber" placeholder="Enter phone number">
+            <mat-error *ngIf="studentForm.get('contactNumber')?.errors?.['required']">
+              Contact number is required
+            </mat-error>
+          </mat-form-field>
+          </form>
+        </div>
+
+        <!-- Step 2: Parent Details -->
+        <div class="step-content" *ngIf="currentStep === 2" [@stepTransition]>
+          <h3 class="text-lg font-semibold mb-6 text-gray-700">Parent/Guardian Details</h3>
+          
+          <!-- Container for side by side layout -->
+          <!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> -->
+            <!-- Primary Contact Section -->
+            <!-- <div class="border border-solid border-gray-200 rounded-lg p-4"> -->
+              <h4 class="text-lg mb-4 text-gray-700">Primary Contact</h4>
+              <form [formGroup]="primaryContactForm" class="flex flex-col gap-4">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Parent/Guardian Name</mat-label>
+                  <input matInput formControlName="primaryParentName" placeholder="Enter name">
+                  <mat-error *ngIf="primaryContactForm.get('primaryParentName')?.errors?.['required']">
+                    Parent name is required
+                  </mat-error>
+                </mat-form-field>
+        
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Contact Number</mat-label>
+                  <input matInput formControlName="primaryContactNumber" placeholder="Enter phone number">
+                  <mat-error *ngIf="primaryContactForm.get('primaryContactNumber')?.errors?.['required']">
+                    Contact number is required
+                  </mat-error>
+                </mat-form-field>
+        
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Relationship</mat-label>
+                  <mat-select formControlName="primaryRelationship">
+                    <mat-option value="father">Father</mat-option>
+                    <mat-option value="mother">Mother</mat-option>
+                    <mat-option value="guardian">Guardian</mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="primaryContactForm.get('primaryRelationship')?.errors?.['required']">
+                    Relationship is required
+                  </mat-error>
+                </mat-form-field>
+              </form>
+            <!-- </div> -->
+        
+            <!-- Secondary Contact Section -->
+            <!-- <div class="border border-solid border-gray-200 rounded-lg p-4"> -->
+              <h4 class="text-lg mb-4 text-gray-700">Secondary Contact (Optional)</h4>
+              <form [formGroup]="secondaryContactForm" class="flex flex-col gap-4">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Parent/Guardian Name</mat-label>
+                  <input matInput formControlName="secondaryParentName" placeholder="Enter name">
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryParentName')?.errors?.['required']">
+                    Parent name is required
+                  </mat-error>
+                </mat-form-field>
+        
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Contact Number</mat-label>
+                  <input matInput formControlName="secondaryContactNumber" placeholder="Enter phone number">
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactNumber')?.errors?.['required']">
+                    Contact number is required
+                  </mat-error>
+                </mat-form-field>
+        
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Relationship</mat-label>
+                  <mat-select formControlName="secondaryRelationship">
+                    <mat-option value="father">Father</mat-option>
+                    <mat-option value="mother">Mother</mat-option>
+                    <mat-option value="guardian">Guardian</mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryRelationship')?.errors?.['required']">
+                    Relationship is required
+                  </mat-error>
+                </mat-form-field>
+              </form>
+            <!-- </div> -->
+          <!-- </div> -->
+        </div>
+
+        <!-- Step 3: Other Details -->
+        <div class="step-content" *ngIf="currentStep === 3" [@stepTransition]>
+          <h3 class="text-lg font-semibold mb-6 text-gray-700">Other Details</h3>
+          <form [formGroup]="otherForm" class="flex flex-col gap-4">
+                      <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Remarks</mat-label>
+            <textarea matInput formControlName="remarks" rows="3" 
+                      placeholder="Enter remarks or additional information">
+            </textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Admission Date</mat-label>
+            <input matInput [matDatepicker]="admissionPicker" formControlName="admissionDate">
+            <mat-datepicker-toggle matSuffix [for]="admissionPicker"></mat-datepicker-toggle>
+            <mat-datepicker #admissionPicker></mat-datepicker>
+            <mat-error *ngIf="otherForm.get('admissionDate')?.errors?.['required']">
+              Admission date is required
+            </mat-error>
+          </mat-form-field>
+          </form>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="flex justify-between mt-8">
+        <button mat-raised-button 
+                [disabled]="currentStep === 1"
+                (click)="previousStep()"
+                color="primary">
+          Previous
+        </button>
+        
+        <button mat-raised-button 
+                (click)="currentStep === 3 ? submitForm() : nextStep()"
+                [color]="currentStep === 3 ? 'accent' : 'primary'">
+          {{currentStep === 3 ? 'Submit' : 'Next'}}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

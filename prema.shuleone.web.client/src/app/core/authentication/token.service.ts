@@ -6,6 +6,7 @@ import { currentTimestamp, filterObject } from './helpers';
 import { Token } from './interface';
 import { BaseToken } from './token';
 import { TokenFactory } from './token-factory.service';
+import { KeycloakService } from 'keycloak-angular';
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +16,7 @@ export class TokenService implements OnDestroy {
 
   private readonly store = inject(LocalStorageService);
   private readonly factory = inject(TokenFactory);
+  private readonly keycloak = inject(KeycloakService);
 
   private readonly change$ = new BehaviorSubject<BaseToken | undefined>(undefined);
   private readonly refresh$ = new Subject<BaseToken | undefined>();
@@ -32,10 +34,12 @@ export class TokenService implements OnDestroy {
   }
 
   change() {
+    console.log("token.service.ts -> change()");
     return this.change$.pipe(share());
   }
 
   refresh() {
+    console.log("token.service.ts -> refresh()");
     this.buildRefresh();
 
     return this.refresh$.pipe(share());

@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Prema.Services.UnifiedNotifier\Prema.Services.UnifiedNotifier.csproj" />
     <ProjectReference Include="..\prema.shuleone.web.client\prema.shuleone.web.client.esproj" />
     <ProjectReference Include="..\Prema.ShuleOne.Web.Server\Prema.ShuleOne.Web.Server.csproj" />
   </ItemGroup>

@@ -5,33 +5,72 @@
       "name": "dashboard",
       "type": "link",
       "icon": "dashboard",
-      "badge": {
-        "color": "red-50",
-        "value": "5"
+      "permissions": {
+        "only": ["super-admin", "admin", "member"],
+        "redirectTo": "/"
       }
     },
     {
-      "route": "/",
-      "name": "sessions",
+      "route": "students",
+      "name": "students",
       "type": "sub",
-      "icon": "question_answer",
+      "icon": "person",
+      "permissions": {
+        "only": ["super-admin", "admin"],
+        "redirectTo": "/"
+      },
       "children": [
         {
-          "route": "403",
-          "name": "403",
-          "type": "link"
+          "route": "admission",
+          "name": "admission",
+          "type": "link",
+          "icon": "assignment",
+          "permissions": {
+            "only": ["super-admin"],
+            "redirectTo": "/"
+          }
         },
         {
-          "route": "404",
-          "name": "404",
-          "type": "link"
-        },
-        {
-          "route": "500",
-          "name": "500",
-          "type": "link"
+          "route": "academics",
+          "name": "academics",
+          "type": "link",
+          "icon": "school",
+          "permissions": {
+            "only": ["super-admin", "admin"],
+            "redirectTo": "/"
+          }
         }
       ]
+    },    
+    {
+      "route": "employees",
+      "name": "employees",
+      "type": "link",
+      "icon": "money",
+      "permissions": {
+        "only": ["super-admin", "admin", "member"],
+        "redirectTo": "/"
+      }
+    },
+    {
+      "route": "finance",
+      "name": "finance",
+      "type": "link",
+      "icon": "article",
+      "permissions": {
+        "only": ["super-admin", "admin", "member"],
+        "redirectTo": "/"
+      }
+    },
+    {
+      "route": "messaging/messages",
+      "name": "messages",
+      "type": "link",
+      "icon": "chat",
+      "permissions": {
+        "only": "super-admin",
+        "redirectTo": "/"
+      }
     }
   ]
 }

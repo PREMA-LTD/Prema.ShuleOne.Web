@@ -4,4 +4,6 @@ builder.AddProject<Projects.Prema_ShuleOne_Web_Server>("prema-shuleone-web-serve
 
 builder.AddProject<Projects.prema_shuleone_web_client>("prema-shuleone-web-client");
 
+builder.AddProject<Projects.Prema_Services_UnifiedNotifier>("prema-services-unifiednotifier");
+
 builder.Build().Run();

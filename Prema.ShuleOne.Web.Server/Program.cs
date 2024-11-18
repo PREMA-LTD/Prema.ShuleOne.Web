@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Prema.ShuleOne.Web.Backend.BulkSms;
 using Prema.ShuleOne.Web.Backend.Database;
@@ -34,6 +35,22 @@ builder.Services.Configure<MobileSasaSettings>(builder.Configuration.GetSection(
 builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection("TelegramBot"));
 builder.Services.AddSingleton<TelegramBot>();
 builder.Services.AddSingleton<Logger>();
+
+// Ensure IConfiguration is available
+var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        // Use configuration values for RabbitMQ connection
+        cfg.Host(rabbitMqConfig["Host"], Convert.ToUInt16(rabbitMqConfig["Port"]), rabbitMqConfig["VirtualHost"], h =>
+        {
+            h.Username(rabbitMqConfig["Username"]);
+            h.Password(rabbitMqConfig["Password"]);
+        });
+    });
+});
 
 var app = builder.Build();
 

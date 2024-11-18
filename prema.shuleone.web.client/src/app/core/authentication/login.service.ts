@@ -12,6 +12,7 @@ export class LoginService {
   protected readonly http = inject(HttpClient);
 
   login(username: string, password: string, rememberMe = false) {
+    console.log("login.service.ts -> login()");
     return this.http.post<Token>('/auth/login', { username, password, rememberMe });
   }
 
@@ -24,10 +25,14 @@ export class LoginService {
   }
 
   me() {
+    console.log("login.service.ts -> me()");
     return this.http.get<User>('/me');
   }
 
   menu() {
-    return this.http.get<{ menu: Menu[] }>('/me/menu').pipe(map(res => res.menu));
+    console.log("getting menu")
+    return this.http
+      .get<{ menu: Menu[] }>('data/menu.json?_t=' + Date.now())
+      .pipe(map(res => res.menu));
   }
 }

@@ -25,6 +25,8 @@ export function TranslateHttpLoaderFactory(http: HttpClient) {
 
 import { LoginService } from '@core/authentication/login.service';
 import { FakeLoginService } from './fake-login.service';
+import { KeycloakAngularModule } from 'keycloak-angular';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [AppComponent],
@@ -34,6 +36,9 @@ import { FakeLoginService } from './fake-login.service';
     ThemeModule,
     SharedModule,
     RoutesModule,
+    KeycloakAngularModule,
+    ReactiveFormsModule,
+    FormsModule,
     FormlyConfigModule.forRoot(),
     NgxPermissionsModule.forRoot(),
     ToastrModule.forRoot(),
@@ -52,7 +57,7 @@ import { FakeLoginService } from './fake-login.service';
     // ==================================================
     // 👇 ❌ Remove it in the realworld application
     //
-    { provide: LoginService, useClass: FakeLoginService },
+    // { provide: LoginService, useClass: LoginService  },
     //
     // ==================================================
     ...httpInterceptorProviders,

@@ -6,6 +6,11 @@ export const environment = {
   production: false,
   baseUrl: '',
   useHash: false,
+  keycloakUrl: 'https://keycloak-dev.prema.co.ke',
+  realm: 'shule-one',
+  clientId: 'public-client',
+  authUrl: `https://keycloak-dev.prema.co.ke/auth/realms/shule-one/protocol/openid-connect/token`
+
 };
 
 /*

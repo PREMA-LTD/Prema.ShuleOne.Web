@@ -5,11 +5,13 @@ VisualStudioVersion = 17.11.35303.130
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prema.ShuleOne.Web.Server", "Prema.ShuleOne.Web.Server\Prema.ShuleOne.Web.Server.csproj", "{7036B0D1-5108-464B-92BB-6EB9B22331FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prema.ShuleOne.Web.AppHost", "Prema.ShuleOne.Web.AppHost\Prema.ShuleOne.Web.AppHost.csproj", "{1246F87E-4549-4E03-BD34-88765F656A24}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prema.ShuleOne.Web.AppHost", "Prema.ShuleOne.Web.AppHost\Prema.ShuleOne.Web.AppHost.csproj", "{1246F87E-4549-4E03-BD34-88765F656A24}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prema.ShuleOne.Web.ServiceDefaults", "Prema.ShuleOne.Web.ServiceDefaults\Prema.ShuleOne.Web.ServiceDefaults.csproj", "{AA1B4EAF-ED4A-4889-996B-C534531E86B0}"
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "prema.shuleone.web.client", "prema.shuleone.web.client\prema.shuleone.web.client.esproj", "{FD1065D5-00F2-4F46-BD16-B4923A6F0680}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prema.Services.UnifiedNotifier", "..\..\..\Prema.Services.UnifiedNotifier\Prema.Services.UnifiedNotifier.csproj", "{32D535DB-FA04-4345-B31B-20209EE6292B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,10 @@ Global
 		{FD1065D5-00F2-4F46-BD16-B4923A6F0680}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD1065D5-00F2-4F46-BD16-B4923A6F0680}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FD1065D5-00F2-4F46-BD16-B4923A6F0680}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{32D535DB-FA04-4345-B31B-20209EE6292B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32D535DB-FA04-4345-B31B-20209EE6292B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32D535DB-FA04-4345-B31B-20209EE6292B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32D535DB-FA04-4345-B31B-20209EE6292B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
