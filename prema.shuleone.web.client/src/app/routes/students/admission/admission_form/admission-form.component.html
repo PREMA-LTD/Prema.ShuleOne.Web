@@ -27,16 +27,16 @@
           <form [formGroup]="studentForm" class="flex flex-col gap-4">
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Surname</mat-label>
-            <input matInput formControlName="fullName" placeholder="Enter full name">
-            <mat-error *ngIf="studentForm.get('fullName')?.errors?.['required']">
-              Full name is required
+            <input matInput formControlName="surname" placeholder="Enter surname">
+            <mat-error *ngIf="studentForm.get('surname')?.errors?.['required']">
+              Surname is required
             </mat-error>
           </mat-form-field>
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>First Name</mat-label>
-            <input matInput formControlName="fullName" placeholder="Enter full name">
-            <mat-error *ngIf="studentForm.get('fullName')?.errors?.['required']">
-              Full name is required
+            <mat-label>Other Names</mat-label>
+            <input matInput formControlName="otherNames" placeholder="Enter other names">
+            <mat-error *ngIf="studentForm.get('otherNames')?.errors?.['required']">
+              Other names is required
             </mat-error>
           </mat-form-field>    
 
@@ -65,25 +65,76 @@
           
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Birth Certificate Entry Number</mat-label>
-            <input matInput formControlName="contactNumber" placeholder="Enter phone number">
-            <mat-error *ngIf="studentForm.get('contactNumber')?.errors?.['required']">
-              Contact number is required
+            <input matInput formControlName="birthCert" placeholder="Enter birth certificate entry number">
+            <mat-error *ngIf="studentForm.get('birthCert')?.errors?.['required']">
+              Birth certificate entry number is required
             </mat-error>
           </mat-form-field>
 
           
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>UPI Number</mat-label>
-            <input matInput formControlName="contactNumber" placeholder="Enter phone number">
-            <mat-error *ngIf="studentForm.get('contactNumber')?.errors?.['required']">
-              Contact number is required
+            <input matInput formControlName="upi" placeholder="Enter UPI number">
+            <mat-error *ngIf="studentForm.get('upi')?.errors?.['required']">
+              UPI is required
+            </mat-error>
+          </mat-form-field> 
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Assessment No</mat-label>
+            <input matInput formControlName="assessmentNo" placeholder="Enter assessment number">
+            <mat-error *ngIf="studentForm.get('assessment')?.errors?.['required']">
+              Assessment number is required
             </mat-error>
           </mat-form-field>
           </form>
         </div>
 
-        <!-- Step 2: Parent Details -->
+        <!-- Step 2: Location -->
         <div class="step-content" *ngIf="currentStep === 2" [@stepTransition]>
+          <h3 class="text-lg font-semibold mb-6 text-gray-700">Place of Residence</h3>
+          <form [formGroup]="placeOfResidence" class="flex flex-col gap-4">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>County</mat-label>
+              <mat-select formControlName="county" required (selectionChange)="onCountyChange($event.value)">
+                <mat-option *ngFor="let county of counties" [value]="county.id">
+                  {{county.name}}
+                </mat-option>=[]
+              </mat-select>
+              <mat-error *ngIf="placeOfResidence.get('county')?.invalid">
+                County is required
+              </mat-error>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Subcounty</mat-label>
+              <mat-select formControlName="subcounty" required (selectionChange)="onSubcountyChange($event.value)">
+                <mat-option *ngFor="let subcounty of subcounties" [value]="subcounty.id">
+                  {{subcounty.name}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="placeOfResidence.get('subcounty')?.invalid">
+                Subcounty is required
+              </mat-error>
+            </mat-form-field>
+        
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Ward</mat-label>
+              <mat-select formControlName="ward" required>
+                <mat-option *ngFor="let ward of wards" [value]="ward.id">
+                  {{ward.name}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="placeOfResidence.get('ward')?.invalid">
+                Ward is required
+              </mat-error>
+            </mat-form-field>
+          
+          </form>
+        </div>
+
+        <!-- Step 3: Parent Details -->
+        <div class="step-content" *ngIf="currentStep === 3" [@stepTransition]>
           <h3 class="text-lg font-semibold mb-6 text-gray-700">Parent/Guardian Details</h3>
           
           <!-- Container for side by side layout -->
@@ -94,28 +145,37 @@
               <form [formGroup]="primaryContactForm" class="flex flex-col gap-4">
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Parent/Guardian Name</mat-label>
-                  <input matInput formControlName="primaryParentName" placeholder="Enter name">
-                  <mat-error *ngIf="primaryContactForm.get('primaryParentName')?.errors?.['required']">
+                  <input matInput formControlName="primaryContactName" placeholder="Enter name">
+                  <mat-error *ngIf="primaryContactForm.get('primaryContactName')?.errors?.['required']">
                     Parent name is required
                   </mat-error>
                 </mat-form-field>
         
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Contact Number</mat-label>
-                  <input matInput formControlName="primaryContactNumber" placeholder="Enter phone number">
-                  <mat-error *ngIf="primaryContactForm.get('primaryContactNumber')?.errors?.['required']">
+                  <input
+                    matInput
+                    formControlName="primaryContactNumber"
+                    placeholder="Enter phone number"
+                    maxlength="10" >
+                  <mat-error *ngIf="primaryContactForm.get('primaryContactNumber')?.hasError('required')">
                     Contact number is required
                   </mat-error>
+                  <mat-error *ngIf="primaryContactForm.get('primaryContactNumber')?.hasError('pattern')">
+                    Invalid phone number
+                  </mat-error>
                 </mat-form-field>
+                
         
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Relationship</mat-label>
-                  <mat-select formControlName="primaryRelationship">
+                  <mat-select formControlName="primaryContactRelationship">
                     <mat-option value="father">Father</mat-option>
                     <mat-option value="mother">Mother</mat-option>
                     <mat-option value="guardian">Guardian</mat-option>
+                    <mat-option value="other">Other</mat-option>
                   </mat-select>
-                  <mat-error *ngIf="primaryContactForm.get('primaryRelationship')?.errors?.['required']">
+                  <mat-error *ngIf="primaryContactForm.get('primaryContactRelationship')?.errors?.['required']">
                     Relationship is required
                   </mat-error>
                 </mat-form-field>
@@ -128,28 +188,35 @@
               <form [formGroup]="secondaryContactForm" class="flex flex-col gap-4">
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Parent/Guardian Name</mat-label>
-                  <input matInput formControlName="secondaryParentName" placeholder="Enter name">
-                  <mat-error *ngIf="secondaryContactForm.get('secondaryParentName')?.errors?.['required']">
+                  <input matInput formControlName="secondaryContactName" placeholder="Enter name">
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactName')?.errors?.['required']">
                     Parent name is required
                   </mat-error>
-                </mat-form-field>
+                </mat-form-field>               
         
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Contact Number</mat-label>
-                  <input matInput formControlName="secondaryContactNumber" placeholder="Enter phone number">
-                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactNumber')?.errors?.['required']">
+                  <input
+                    matInput
+                    formControlName="secondaryContactNumber"
+                    placeholder="Enter phone number"
+                    maxlength="10" >
+                  <mat-error *ngIf="primaryContactForm.get('secondaryContactNumber')?.hasError('required')">
                     Contact number is required
+                  </mat-error>
+                  <mat-error *ngIf="primaryContactForm.get('secondaryContactNumber')?.hasError('pattern')">
+                    Invalid phone number
                   </mat-error>
                 </mat-form-field>
         
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Relationship</mat-label>
-                  <mat-select formControlName="secondaryRelationship">
+                  <mat-select formControlName="secondaryContactRelationship">
                     <mat-option value="father">Father</mat-option>
                     <mat-option value="mother">Mother</mat-option>
                     <mat-option value="guardian">Guardian</mat-option>
                   </mat-select>
-                  <mat-error *ngIf="secondaryContactForm.get('secondaryRelationship')?.errors?.['required']">
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactRelationship')?.errors?.['required']">
                     Relationship is required
                   </mat-error>
                 </mat-form-field>
@@ -158,13 +225,13 @@
           <!-- </div> -->
         </div>
 
-        <!-- Step 3: Other Details -->
-        <div class="step-content" *ngIf="currentStep === 3" [@stepTransition]>
+        <!-- Step 4: Other Details -->
+        <div class="step-content" *ngIf="currentStep === 4" [@stepTransition]>
           <h3 class="text-lg font-semibold mb-6 text-gray-700">Other Details</h3>
           <form [formGroup]="otherForm" class="flex flex-col gap-4">
                       <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Remarks</mat-label>
-            <textarea matInput formControlName="remarks" rows="3" 
+            <mat-label>Medical/Special Needs</mat-label>
+            <textarea matInput formControlName="specialNeeds" rows="3" 
                       placeholder="Enter remarks or additional information">
             </textarea>
           </mat-form-field>
@@ -178,6 +245,7 @@
               Admission date is required
             </mat-error>
           </mat-form-field>
+          
           </form>
         </div>
       </div>

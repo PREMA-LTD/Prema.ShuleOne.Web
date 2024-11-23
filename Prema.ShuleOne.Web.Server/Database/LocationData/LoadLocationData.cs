@@ -4,7 +4,7 @@ using Prema.ShuleOne.Web.Server.Models.Location;
 using System.Formats.Asn1;
 using System.Globalization;
 
-namespace Prema.ShuleOne.Web.Backend.Database.LocationData
+namespace Prema.ShuleOne.Web.Server.Database.LocationData
 {
     public static class LoadLocationData
     {

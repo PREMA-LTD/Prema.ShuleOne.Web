@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
-using Prema.ShuleOne.Web.Backend.Database;
+using Prema.ShuleOne.Web.Server.Database;
 using Prema.ShuleOne.Web.Server.Models;
-using Prema.ShuleOne.Web.Backend.BulkSms;
+using Prema.ShuleOne.Web.Server.BulkSms;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 
 public static class StudentEndpoints

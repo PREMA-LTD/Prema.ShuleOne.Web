@@ -9,12 +9,12 @@ using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Reflection.Emit;
-using Prema.ShuleOne.Web.Backend.Database.LocationData;
+using Prema.ShuleOne.Web.Server.Database.LocationData;
 using Prema.ShuleOne.Web.Server.Models.Location;
 using Prema.ShuleOne.Web.Server.Models;
 
 
-namespace Prema.ShuleOne.Web.Backend.Database
+namespace Prema.ShuleOne.Web.Server.Database
 {
     public partial class ShuleOneDatabaseContext : Microsoft.EntityFrameworkCore.DbContext
     {

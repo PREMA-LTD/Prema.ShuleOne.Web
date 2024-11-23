@@ -1,16 +1,29 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
-using Prema.ShuleOne.Web.Backend.BulkSms;
-using Prema.ShuleOne.Web.Backend.Database;
+using Prema.ShuleOne.Web.Server.Caching.CacheServices;
+using Prema.ShuleOne.Web.Server.BulkSms;
+using Prema.ShuleOne.Web.Server.Database;
 using Prema.ShuleOne.Web.Server.AppSettings;
 using Prema.ShuleOne.Web.Server.BulkSms;
 using Prema.ShuleOne.Web.Server.Endpoints;
 using Prema.ShuleOne.Web.Server.Logging;
 using Prema.ShuleOne.Web.Server.Telegram;
+using Prema.ShuleOne.Web.Server.AutoMapper;
+using Prema.ShuleOne.Web.Server.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder
+            .WithOrigins("https://localhost:4200", "https://fintrack.shangilia.africa") // Update this with your Angular app's URL
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -35,6 +48,13 @@ builder.Services.Configure<MobileSasaSettings>(builder.Configuration.GetSection(
 builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection("TelegramBot"));
 builder.Services.AddSingleton<TelegramBot>();
 builder.Services.AddSingleton<Logger>();
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+//cache
+builder.Services.AddSingleton<ILocationCacheService, LocationCacheService>();
+builder.Services.AddHostedService<LocationCacheWorker>();
+
 
 // Ensure IConfiguration is available
 var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
@@ -68,9 +88,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowSpecificOrigin");
+
 app.MapFallbackToFile("/index.html");
 
 app.MapStudentEndpoints();
+
+app.MapLocationEndpoints();
 
 app.Run();
 

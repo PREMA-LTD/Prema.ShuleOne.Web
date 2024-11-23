@@ -1,4 +1,4 @@
-﻿namespace Prema.ShuleOne.Web.Backend.BulkSms
+﻿namespace Prema.ShuleOne.Web.Server.BulkSms
 {
     public interface IBulkSms
     {

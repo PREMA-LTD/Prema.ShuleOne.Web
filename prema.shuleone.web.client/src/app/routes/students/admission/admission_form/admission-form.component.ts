@@ -1,6 +1,8 @@
 import { trigger, transition, style, animate, state } from '@angular/animations';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { County, LocationData, Subcounty, Ward } from 'app/models/location.model';
+import { LocationService } from 'app/service/location.service';
 
 
 @Component({
@@ -47,13 +49,26 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 })
 
 export class AdmissionFormComponent {
+  
+  private readonly locationService = inject(LocationService);
+  
   currentStep = 1;
-  steps = [1, 2, 3];  
+  steps = [1, 2, 3, 4];  
 
   studentForm: FormGroup;
+  placeOfResidence: FormGroup;
   primaryContactForm : FormGroup;
   secondaryContactForm : FormGroup;
   otherForm: FormGroup;
+
+  isSubcountyDisabled: boolean = true;
+  isWardDisabled: boolean = true;
+  counties: County[] = [];
+  subcounties: Subcounty[] = [];
+  wards: Ward[] = [];
+  selectedCountyId: number | null = null; // Variable to store the selected county ID
+  selectedSubcountyId: number | null = null; // Variable to store the selected county ID
+
 
   grades = [
     { value: 1, name: 'Play Group' },
@@ -66,27 +81,54 @@ export class AdmissionFormComponent {
   
   constructor(private fb: FormBuilder) {
     this.studentForm = this.fb.group({
-      fullName: [''],
-      grade: [''],
-      dob: ['']
+      surname: ['', Validators.required],
+      otherNames: ['', Validators.required],
+      grade: ['', Validators.required],
+      assessmentNo: [''],
+      birthCert: [''],
+      upi: [''],
+      dob: ['', Validators.required]
     });
 
+    this.placeOfResidence = this.fb.group({      
+      county: ['', Validators.required],
+      subcounty: ['', Validators.required],
+      ward: ['', Validators.required],
+    })
+
     this.primaryContactForm = this.fb.group({
-      primaryParentName: ['', Validators.required],
-      primaryContactNumber: ['', Validators.required],
-      primaryRelationship: ['', Validators.required]
+      primaryContactName: ['', Validators.required],
+      primaryContactNumber: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^0\d{9}$/) // Regex: starts with 0 and followed by 9 digits
+        ]
+      ],
+      primaryContactRelationship: ['', Validators.required]
     });
   
     this.secondaryContactForm = this.fb.group({
-      secondaryParentName: ['', Validators.required],
-      secondaryContactNumber: ['', Validators.required],
-      secondaryRelationship: ['', Validators.required]
+      secondaryContactName: [''],
+      secondaryContactNumber: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^0\d{9}$/) // Regex: starts with 0 and followed by 9 digits
+        ]
+      ],
+      secondaryContactRelationship: ['']
     });
 
     this.otherForm = this.fb.group({
-      remarks: [''],
-      admissionDate: ['']
+      specialNeeds: [''],
+      admissionDate: [new Date()]
     });
+
+    this.placeOfResidence.get('subcounty')?.disable();
+    this.placeOfResidence.get('ward')?.disable();
+
+    this.getCounties();
   }
 
   getStepClass(step: number): string {
@@ -103,10 +145,31 @@ export class AdmissionFormComponent {
   }
 
   nextStep(): void {
+    if (this.currentStep === 1 && this.studentForm.invalid) {
+      this.studentForm.markAllAsTouched(); // Highlight all invalid fields
+      return;
+    }
+  
+    if (this.currentStep === 2 && this.placeOfResidence.invalid) {
+      this.placeOfResidence.markAllAsTouched();
+      return;
+    }
+
+    if (this.currentStep === 3 && this.primaryContactForm.invalid) {
+      this.primaryContactForm.markAllAsTouched();
+      return;
+    }
+  
+    if (this.currentStep === 4 && this.secondaryContactForm.invalid) {
+      this.secondaryContactForm.markAllAsTouched();
+      return;
+    }
+  
     if (this.currentStep < 3) {
       this.currentStep++;
     }
   }
+  
 
   previousStep(): void {
     if (this.currentStep > 1) {
@@ -114,16 +177,96 @@ export class AdmissionFormComponent {
     }
   }
 
-  submitForm() {
-    const studentData = this.studentForm.value;
-    const primaryContactForm = this.primaryContactForm.value;
-    const secondaryContactForm  = this.secondaryContactForm .value;
-    const otherData = this.otherForm.value;
-
-    console.log('Student Data:', studentData);
-    console.log('Parent Data:', primaryContactForm);
-    console.log('Parent Data:', secondaryContactForm);
-    console.log('Other Data:', otherData);
+  //#region "Location logic"
+  async getLocation(wardId: number): Promise<LocationData | undefined> {
+    this.isSubcountyDisabled = false;
+    try {
+      const location = await (await this.locationService.getLocation(wardId)).toPromise();
+      return location;
+    } catch (error) {
+      console.error('Error fetching location', error);
+      return undefined;
+    }
   }
+
+  async getCounties() {
+    (await this.locationService.getCounties()).subscribe(
+      (data: County[]) => {
+        this.counties = data;  // Assign the data to the counties array
+      },
+      (error) => {
+        console.error('Error fetching counties', error);
+      }
+    );
+    this.placeOfResidence.get('county')?.setValidators([Validators.required]);
+    this.placeOfResidence.get('county')?.updateValueAndValidity();
+  }
+
+  async getSubcounties(countyId: number) {
+    (await this.locationService.getSubcounties(countyId)).subscribe(
+      (data: Subcounty[]) => {
+        this.subcounties = data;  // Assign the data to the counties array
+      },
+      (error) => {
+        console.error('Error fetching subcounties', error);
+      }
+    );
+  }
+
+  async getWards(subcountyId?: number) {
+    (await this.locationService.getWards(subcountyId)).subscribe(
+      (data: Ward[]) => {
+        this.wards = data;  // Assign the data to the counties array
+      },
+      (error) => {
+        console.error('Error fetching wards', error);
+      }
+    );
+    this.placeOfResidence.get('ward')?.enable();
+  }
+
+  onCountyChange(countyId: number) {
+    this.isSubcountyDisabled = false;
+    this.getSubcounties(countyId);
+    this.placeOfResidence.get('subcounty')?.setValidators([Validators.required]);
+    this.placeOfResidence.get('ward')?.setValidators([Validators.required]);
+    this.placeOfResidence.get('subcounty')?.updateValueAndValidity();
+    this.placeOfResidence.get('ward')?.updateValueAndValidity();
+    this.placeOfResidence.get('subcounty')?.enable();
+    this.placeOfResidence.get('ward')?.disable();
+  }
+
+  onSubcountyChange(subcountyId: number) {
+    this.getWards(subcountyId);
+    this.placeOfResidence.get('ward')?.enable();
+    this.placeOfResidence.get('ward')?.setValidators([Validators.required]);
+    this.placeOfResidence.get('ward')?.updateValueAndValidity();
+  }
+  //#endregion
+
+  submitForm(): void {
+    if (this.studentForm.invalid || this.primaryContactForm.invalid || this.secondaryContactForm.invalid || this.otherForm.invalid) {
+
+      // Mark all forms as touched to display validation errors
+      this.studentForm.markAllAsTouched();
+      this.primaryContactForm.markAllAsTouched();
+      this.secondaryContactForm.markAllAsTouched();
+      this.otherForm.markAllAsTouched();
+      return;
+    }
+  
+    const studentData = this.studentForm.value;
+    const primaryContactData = this.primaryContactForm.value;
+    const secondaryContactData = this.secondaryContactForm.value;
+    const otherData = this.otherForm.value;
+  
+    console.log('Student Data:', studentData);
+    console.log('Primary Contact Data:', primaryContactData);
+    console.log('Secondary Contact Data:', secondaryContactData);
+    console.log('Other Data:', otherData);
+  
+    // Proceed with submission logic
+  }
+  
 
 }
