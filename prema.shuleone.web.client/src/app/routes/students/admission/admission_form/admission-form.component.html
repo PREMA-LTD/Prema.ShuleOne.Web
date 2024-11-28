@@ -129,27 +129,39 @@
                 Ward is required
               </mat-error>
             </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Village or Estate</mat-label>
+              <input matInput formControlName="villageOrEstate" placeholder="Enter village or estate">
+              <mat-error *ngIf="studentForm.get('villageOrEstate')?.errors?.['required']">
+                Village or estate required
+              </mat-error>
+            </mat-form-field> 
           
           </form>
         </div>
 
-        <!-- Step 3: Parent Details -->
+        <!-- Step 3: Primary Contact Details -->
         <div class="step-content" *ngIf="currentStep === 3" [@stepTransition]>
-          <h3 class="text-lg font-semibold mb-6 text-gray-700">Parent/Guardian Details</h3>
-          
-          <!-- Container for side by side layout -->
-          <!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> -->
-            <!-- Primary Contact Section -->
-            <!-- <div class="border border-solid border-gray-200 rounded-lg p-4"> -->
+          <h3 class="text-lg font-semibold mb-6 text-gray-700">Parent/Guardian Details</h3>          
+          <div class="row">
+            <div class="col">
               <h4 class="text-lg mb-4 text-gray-700">Primary Contact</h4>
               <form [formGroup]="primaryContactForm" class="flex flex-col gap-4">
                 <mat-form-field appearance="outline" class="w-full">
-                  <mat-label>Parent/Guardian Name</mat-label>
-                  <input matInput formControlName="primaryContactName" placeholder="Enter name">
-                  <mat-error *ngIf="primaryContactForm.get('primaryContactName')?.errors?.['required']">
-                    Parent name is required
+                  <mat-label>Surname</mat-label>
+                  <input matInput formControlName="primaryContactSurname" placeholder="Enter surname">
+                  <mat-error *ngIf="primaryContactForm.get('primaryContactSurname')?.errors?.['required']">
+                    Surname is required
                   </mat-error>
                 </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Other Names</mat-label>
+                  <input matInput formControlName="primaryContactOthernames" placeholder="Enter other names">
+                  <mat-error *ngIf="primaryContactForm.get('primaryContactOthernames')?.errors?.['required']">
+                    Other names is required
+                  </mat-error>
+                </mat-form-field>  
         
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Contact Number</mat-label>
@@ -165,34 +177,51 @@
                     Invalid phone number
                   </mat-error>
                 </mat-form-field>
-                
+        
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Occupation</mat-label>
+                  <input matInput formControlName="primaryContactOccupation" placeholder="Enter surname">
+                  <mat-error *ngIf="primaryContactForm.get('primaryContactOccupation')?.errors?.['required']">
+                    Occupation is required
+                  </mat-error>
+                </mat-form-field>
         
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Relationship</mat-label>
                   <mat-select formControlName="primaryContactRelationship">
-                    <mat-option value="father">Father</mat-option>
-                    <mat-option value="mother">Mother</mat-option>
-                    <mat-option value="guardian">Guardian</mat-option>
-                    <mat-option value="other">Other</mat-option>
+                    <mat-option *ngFor="let relationship of relationships" [value]="relationship.value">
+                      {{ relationship.key }}
+                    </mat-option>
                   </mat-select>
                   <mat-error *ngIf="primaryContactForm.get('primaryContactRelationship')?.errors?.['required']">
                     Relationship is required
                   </mat-error>
                 </mat-form-field>
               </form>
-            <!-- </div> -->
-        
-            <!-- Secondary Contact Section -->
-            <!-- <div class="border border-solid border-gray-200 rounded-lg p-4"> -->
+            </div>
+        </div>
+        </div>
+        <!-- Step 4: Secondary Parent Details -->
+            <div class="step-content" *ngIf="currentStep === 4" [@stepTransition]>
+              <h3 class="text-lg font-semibold mb-6 text-gray-700">Parent/Guardian Details</h3>          
+              <div class="row">
+                <div class="col">
               <h4 class="text-lg mb-4 text-gray-700">Secondary Contact (Optional)</h4>
               <form [formGroup]="secondaryContactForm" class="flex flex-col gap-4">
                 <mat-form-field appearance="outline" class="w-full">
-                  <mat-label>Parent/Guardian Name</mat-label>
-                  <input matInput formControlName="secondaryContactName" placeholder="Enter name">
-                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactName')?.errors?.['required']">
-                    Parent name is required
+                  <mat-label>Surname</mat-label>
+                  <input matInput formControlName="secondaryContactSurname" placeholder="Enter surname">
+                  <mat-error *ngIf="secondaryContactForm.get('surname')?.errors?.['required']">
+                    Surname is required
                   </mat-error>
-                </mat-form-field>               
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Other Names</mat-label>
+                  <input matInput formControlName="secondaryContactOthernames" placeholder="Enter other names">
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactOthernames')?.errors?.['required']">
+                    Other names is required
+                  </mat-error>
+                </mat-form-field>            
         
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Contact Number</mat-label>
@@ -201,32 +230,41 @@
                     formControlName="secondaryContactNumber"
                     placeholder="Enter phone number"
                     maxlength="10" >
-                  <mat-error *ngIf="primaryContactForm.get('secondaryContactNumber')?.hasError('required')">
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactNumber')?.hasError('required')">
                     Contact number is required
                   </mat-error>
-                  <mat-error *ngIf="primaryContactForm.get('secondaryContactNumber')?.hasError('pattern')">
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactNumber')?.hasError('pattern')">
                     Invalid phone number
                   </mat-error>
                 </mat-form-field>
         
                 <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Occupation</mat-label>
+                  <input matInput formControlName="secondaryContactOccupation" placeholder="Enter surname">
+                  <mat-error *ngIf="secondaryContactForm.get('secondaryContactOccupation')?.errors?.['required']">
+                    Occupation is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Relationship</mat-label>
                   <mat-select formControlName="secondaryContactRelationship">
-                    <mat-option value="father">Father</mat-option>
-                    <mat-option value="mother">Mother</mat-option>
-                    <mat-option value="guardian">Guardian</mat-option>
+                    <mat-option *ngFor="let relationship of relationships" [value]="relationship.value">
+                      {{ relationship.key }}
+                    </mat-option>
                   </mat-select>
                   <mat-error *ngIf="secondaryContactForm.get('secondaryContactRelationship')?.errors?.['required']">
                     Relationship is required
                   </mat-error>
                 </mat-form-field>
+                
               </form>
-            <!-- </div> -->
-          <!-- </div> -->
+            </div>
+          </div>
         </div>
 
         <!-- Step 4: Other Details -->
-        <div class="step-content" *ngIf="currentStep === 4" [@stepTransition]>
+        <div class="step-content" *ngIf="currentStep === 5" [@stepTransition]>
           <h3 class="text-lg font-semibold mb-6 text-gray-700">Other Details</h3>
           <form [formGroup]="otherForm" class="flex flex-col gap-4">
                       <mat-form-field appearance="outline" class="w-full">
@@ -260,9 +298,9 @@
         </button>
         
         <button mat-raised-button 
-                (click)="currentStep === 3 ? submitForm() : nextStep()"
-                [color]="currentStep === 3 ? 'accent' : 'primary'">
-          {{currentStep === 3 ? 'Submit' : 'Next'}}
+                (click)="currentStep === 5 ? submitForm() : nextStep()"
+                [color]="currentStep === 5 ? 'accent' : 'primary'">
+          {{currentStep === 5 ? 'Submit' : 'Next'}}
         </button>
       </div>
     </mat-card-content>

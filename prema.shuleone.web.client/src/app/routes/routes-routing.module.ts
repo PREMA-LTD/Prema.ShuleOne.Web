@@ -25,6 +25,7 @@ const routes: Routes = [
       { path: '404', component: Error404Component },
       { path: '500', component: Error500Component },
       { path: 'students', loadChildren: () => import('./students/students.module').then(m => m.StudentsModule) },
+      { path: 'finance', loadChildren: () => import('./finance/finance.module').then(m => m.FinanceModule) },
     ],
   },
   {

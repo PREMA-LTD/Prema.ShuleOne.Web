@@ -1,8 +1,14 @@
 import { trigger, transition, style, animate, state } from '@angular/animations';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { KeycloakService } from '@core/authentication/keycloak.service';
 import { County, LocationData, Subcounty, Ward } from 'app/models/location.model';
+import { Relationship, Student } from 'app/models/student.model';
 import { LocationService } from 'app/service/location.service';
+import { StudentService } from 'app/service/student.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/mpesa-stk-push.component';
+import { MatDialog } from '@angular/material/dialog';
 
 
 @Component({
@@ -51,6 +57,8 @@ import { LocationService } from 'app/service/location.service';
 export class AdmissionFormComponent {
   
   private readonly locationService = inject(LocationService);
+  private readonly studentService = inject(StudentService);
+  private readonly keycloakService = inject(KeycloakService);
   
   currentStep = 1;
   steps = [1, 2, 3, 4];  
@@ -69,6 +77,9 @@ export class AdmissionFormComponent {
   selectedCountyId: number | null = null; // Variable to store the selected county ID
   selectedSubcountyId: number | null = null; // Variable to store the selected county ID
 
+  relationships = Object.entries(Relationship) // Convert enum to array of key-value pairs
+  .filter(([key]) => isNaN(Number(key))) // Remove numeric keys
+  .map(([key, value]) => ({ key, value })); // Format as array of objects
 
   grades = [
     { value: 1, name: 'Play Group' },
@@ -79,7 +90,7 @@ export class AdmissionFormComponent {
     { value: 6, name: 'Grade 3' }
   ];  
   
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private _snackBar: MatSnackBar, public dialog: MatDialog) {
     this.studentForm = this.fb.group({
       surname: ['', Validators.required],
       otherNames: ['', Validators.required],
@@ -94,10 +105,12 @@ export class AdmissionFormComponent {
       county: ['', Validators.required],
       subcounty: ['', Validators.required],
       ward: ['', Validators.required],
+      villageOrEstate: ['', Validators.required]
     })
 
     this.primaryContactForm = this.fb.group({
-      primaryContactName: ['', Validators.required],
+      primaryContactSurname: ['', Validators.required],
+      primaryContactOthernames: ['', Validators.required],
       primaryContactNumber: [
         '',
         [
@@ -105,19 +118,21 @@ export class AdmissionFormComponent {
           Validators.pattern(/^0\d{9}$/) // Regex: starts with 0 and followed by 9 digits
         ]
       ],
-      primaryContactRelationship: ['', Validators.required]
+      primaryContactRelationship: ['', Validators.required],
+      primaryContactOccupation: ['', Validators.required]
     });
-  
+     
     this.secondaryContactForm = this.fb.group({
-      secondaryContactName: [''],
+      secondaryContactSurname: [''],
+      secondaryContactOthernames: [''],
       secondaryContactNumber: [
         '',
         [
-          Validators.required,
           Validators.pattern(/^0\d{9}$/) // Regex: starts with 0 and followed by 9 digits
         ]
       ],
-      secondaryContactRelationship: ['']
+      secondaryContactRelationship: [''],
+      secondaryContactOccupation: ['']
     });
 
     this.otherForm = this.fb.group({
@@ -145,31 +160,43 @@ export class AdmissionFormComponent {
   }
 
   nextStep(): void {
+    console.log("current step: "+this.currentStep)
+
     if (this.currentStep === 1 && this.studentForm.invalid) {
       this.studentForm.markAllAsTouched(); // Highlight all invalid fields
+      this.logFormErrors(this.studentForm, 'Student Form');
       return;
     }
-  
+    
     if (this.currentStep === 2 && this.placeOfResidence.invalid) {
       this.placeOfResidence.markAllAsTouched();
+      this.logFormErrors(this.placeOfResidence, 'Place of Residence');
+      return;
+    }
+    
+    if (this.currentStep === 3 && this.primaryContactForm.invalid) {
+      this.primaryContactForm.markAllAsTouched();
+      this.logFormErrors(this.primaryContactForm, 'Primary Contact Form');
+      return;
+    }
+    
+    if (this.currentStep === 4 && this.secondaryContactForm.invalid) {
+      this.secondaryContactForm.markAllAsTouched();
+      this.logFormErrors(this.secondaryContactForm, 'Primary Contact Form');
       return;
     }
 
-    if (this.currentStep === 3 && this.primaryContactForm.invalid) {
-      this.primaryContactForm.markAllAsTouched();
+    if (this.currentStep === 5 && this.otherForm.invalid) {
+      this.otherForm.markAllAsTouched();
+      this.logFormErrors(this.otherForm, 'Other Form');
       return;
     }
+    
   
-    if (this.currentStep === 4 && this.secondaryContactForm.invalid) {
-      this.secondaryContactForm.markAllAsTouched();
-      return;
-    }
-  
-    if (this.currentStep < 3) {
+    if (this.currentStep < 5) {
       this.currentStep++;
     }
-  }
-  
+  }  
 
   previousStep(): void {
     if (this.currentStep > 1) {
@@ -177,6 +204,22 @@ export class AdmissionFormComponent {
     }
   }
 
+  private logFormErrors(formGroup: FormGroup, formName: string): void {
+    console.error(`Errors in ${formName}:`);
+    Object.keys(formGroup.controls).forEach((key) => {
+      const control = formGroup.get(key);
+      if (control && control.invalid) {
+        console.error(`- Field: ${key}`);
+        const errors = control.errors;
+        if (errors) {
+          Object.keys(errors).forEach((errorKey) => {
+            console.error(`  - Error: ${errorKey}, Value: ${errors[errorKey]}`);
+          });
+        }
+      }
+    });
+  }
+  
   //#region "Location logic"
   async getLocation(wardId: number): Promise<LocationData | undefined> {
     this.isSubcountyDisabled = false;
@@ -244,7 +287,7 @@ export class AdmissionFormComponent {
   }
   //#endregion
 
-  submitForm(): void {
+  async submitForm(): Promise<void> {
     if (this.studentForm.invalid || this.primaryContactForm.invalid || this.secondaryContactForm.invalid || this.otherForm.invalid) {
 
       // Mark all forms as touched to display validation errors
@@ -256,17 +299,119 @@ export class AdmissionFormComponent {
     }
   
     const studentData = this.studentForm.value;
+    const placeOfResidenceData = this.placeOfResidence.value;
     const primaryContactData = this.primaryContactForm.value;
     const secondaryContactData = this.secondaryContactForm.value;
     const otherData = this.otherForm.value;
   
-    console.log('Student Data:', studentData);
-    console.log('Primary Contact Data:', primaryContactData);
-    console.log('Secondary Contact Data:', secondaryContactData);
-    console.log('Other Data:', otherData);
-  
     // Proceed with submission logic
-  }
-  
+    const userId = this.keycloakService.keycloak.profile?.id;
+    const dob = new Date(studentData.dob);
+    const studentAdmissionData: Student = {
+      id: 0,
+      surname: studentData.surname || '',
+      other_names: studentData.otherNames || '',
+      date_created: new Date().toISOString(),
+      date_updated: new Date().toISOString(),
+      fk_created_by: userId || 'unknown',
+      gender: studentData.gender,
+      village_or_estate: placeOfResidenceData.villageOrEstate,
+      fk_residence_ward_id: placeOfResidenceData.ward,
+      current_grade: studentData.grade,
+      date_of_admission: otherData.admissionDate,
+      upi: studentData.upi,
+      assessment_no: studentData.upi,
+      birth_cert_entry_no: studentData.upi,
+      medical_needs: otherData.specialNeeds,
+      date_of_birth: `${dob.getFullYear()}-${(dob.getMonth() + 1).toString().padStart(2, '0')}-${dob.getDate().toString().padStart(2, '0')}`,
+      primary_contact: {
+        id: 0,
+        surname: primaryContactData?.primaryContactSurname,
+        other_names: primaryContactData?.primaryContactOthernames,
+        date_created: new Date().toISOString(),
+        date_updated: new Date().toISOString(),
+        fk_created_by: userId || 'unknown',
+        gender: 0,
+        village_or_estate: placeOfResidenceData.villageOrEstate,
+        fk_residence_ward_id: placeOfResidenceData.ward,
+        contact_priority: 1,
+        phone_number: primaryContactData?.primaryContactNumber,
+        email: '',
+        occupation: primaryContactData?.primaryContactOccupation,
+        relationship: primaryContactData?.primaryContactRelationship
+      },
+      secondary_contact: secondaryContactData?.secondaryContactSurname == "" ? null : {
+        id: 0,
+        surname: secondaryContactData?.secondaryContactSurname,
+        other_names: secondaryContactData?.secondaryContactOthernames,
+        date_created: new Date().toISOString(),
+        date_updated: new Date().toISOString(),
+        fk_created_by: userId || 'unknown',
+        gender: 0,
+        village_or_estate: placeOfResidenceData.villageOrEstate,
+        fk_residence_ward_id: placeOfResidenceData.ward,
+        contact_priority: 2,
+        phone_number: secondaryContactData?.secondaryContactNumber,
+        email: '',
+        occupation: secondaryContactData?.secondaryContactOccupation,
+        relationship: secondaryContactData?.secondaryContactRelationship
+      },
+    };
 
+    console.log('studentAdmissionData:', studentAdmissionData);
+
+    //send to api
+    try{
+    const response = await this.studentService.admitStudent(studentAdmissionData)
+    
+      if(response){
+      this._snackBar.open('Student admitted successfully.', 'Ok', {
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+        duration: 5 * 1000,
+        });
+        const paymentDetails: any = {
+          feeType: "Admission Fee",
+          amount: 500,
+          mpesaNumber: studentAdmissionData.primary_contact.phone_number
+        }
+
+        this.admitNewStudent(paymentDetails);
+        
+      } else {
+        this._snackBar.open('Error admitting student, please try again.', 'Ok', {
+          panelClass: ['error-snackbar'],  // Add a custom CSS class
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          duration: 5 * 1000,
+          });
+      }
+
+    
+    } catch(error) {
+      console.error('Error sending message:', error);
+
+      
+      this._snackBar.open('Error admitting student, please try again.', 'Ok', {
+        panelClass: ['error-snackbar'],  // Add a custom CSS class
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+        duration: 5 * 1000,
+        });
+    };
+
+  }
+
+  admitNewStudent(paymentData: any){
+    console.log("admitNewStudent")
+    const dialogRef = this.dialog.open(FinanceMpesaStkPushComponent, {
+      width: '400px',
+      data: { paymentData }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result.success === true) {
+      }
+    });
+  }
 }

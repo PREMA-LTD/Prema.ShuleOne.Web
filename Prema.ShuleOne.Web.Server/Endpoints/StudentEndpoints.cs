@@ -141,7 +141,7 @@ public static class StudentEndpoints
             string childName = $"{student.other_names} {student.surname}";
             string message = $"Dear {parentName}, we are pleased to inform you that your child, {childName}, has been successfully admitted to Lifeway Christian Academy. Their admission number is {student.id}. We look forward to a fruitful and exciting learning journey together.";
             
-            await mobileSasa.SendSms(primaryContact.phone_number, parentName, message);
+            //await mobileSasa.SendSms(primaryContact.phone_number, parentName, message);
 
             return TypedResults.Created($"/api/Student/{student.id}", student);
         })

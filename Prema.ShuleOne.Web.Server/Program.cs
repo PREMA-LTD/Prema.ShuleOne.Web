@@ -10,6 +10,7 @@ using Prema.ShuleOne.Web.Server.Logging;
 using Prema.ShuleOne.Web.Server.Telegram;
 using Prema.ShuleOne.Web.Server.AutoMapper;
 using Prema.ShuleOne.Web.Server.Controllers;
+using Prema.ShuleOne.Web.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,7 @@ builder.Services.Configure<MobileSasaSettings>(builder.Configuration.GetSection(
 builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection("TelegramBot"));
 builder.Services.AddSingleton<TelegramBot>();
 builder.Services.AddSingleton<Logger>();
+builder.Services.AddSingleton<MpesaRequestService>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
@@ -95,6 +97,8 @@ app.MapFallbackToFile("/index.html");
 app.MapStudentEndpoints();
 
 app.MapLocationEndpoints();
+
+app.MapFinanceEndpints();
 
 app.Run();
 
