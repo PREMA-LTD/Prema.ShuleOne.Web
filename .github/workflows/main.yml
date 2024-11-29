@@ -4,24 +4,28 @@ on:
     branches:
       - master    
     paths:
-      - 'Prema.ShuleOne.Web.Server/**'  # This will watch for changes in the Backend directory
+      - 'Prema.ShuleOne.Web.Server/**'
   workflow_dispatch:
 jobs:
   push_to_registry:
-    name: push docker image to hub
+    name: Push Docker Image to Hub
     runs-on: ubuntu-latest
     steps:
-      - name: check repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: login to docker registry
+        with:
+          fetch-depth: 0  # Fetch full history to ensure correct file paths
+
+      - name: Login to Docker Registry
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: build and push docker image to registry
+      
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: './'  # Ensure the context points to the server directory
+          context: './'  # Project root
           file: './Prema.ShuleOne.Web.Server/Dockerfile'
           push: true
           tags: kimzdocker/prema.shuleone:latest
