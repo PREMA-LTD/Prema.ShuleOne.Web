@@ -19,6 +19,6 @@ jobs:
       - name: build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
-          context: ./Prema.ShuleOne.Web.Server  # Ensure the context points to the server directory
+          context: ./  # Ensure the context points to the server directory
           push: true
           tags: kimzdocker/prema.shuleone:latest
