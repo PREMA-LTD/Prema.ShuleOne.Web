@@ -1,30 +1,32 @@
-#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
+# This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
+
+# This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Prema.ShuleOne.Web.Server.csproj", "."]
+COPY ["../prema.shuleone.web.client/prema.shuleone.web.client.esproj", "../prema.shuleone.web.client/"]
+COPY ["../Prema.ShuleOne.Web.ServiceDefaults/Prema.ShuleOne.Web.ServiceDefaults.csproj", "../Prema.ShuleOne.Web.ServiceDefaults/"]
 RUN dotnet restore "./Prema.ShuleOne.Web.Server.csproj"
 COPY . .
 WORKDIR "/src/."
 RUN dotnet build "./Prema.ShuleOne.Web.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
+# This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./Prema.ShuleOne.Web.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Copy the csv file to the image
+# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-# Ensure the directory exists before copying the file
-RUN mkdir -p ./Database/LocationData
-COPY ["Database/LocationData/kenya-location-data.csv", "./Database/LocationData/"]
-
 ENTRYPOINT ["dotnet", "Prema.ShuleOne.Web.Server.dll"]

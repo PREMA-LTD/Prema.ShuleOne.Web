@@ -9,6 +9,7 @@
     <SpaRoot>..\prema.shuleone.web.client</SpaRoot>
     <SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:4200</SpaProxyServerUrl>
+    <DockerfileContext>.</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,7 +44,7 @@
 	  <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.10" />
 	  <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.10" />
   </ItemGroup>
-	<!--
+<!--
   <ItemGroup>
     <ProjectReference Include="..\prema.shuleone.web.client\prema.shuleone.web.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
