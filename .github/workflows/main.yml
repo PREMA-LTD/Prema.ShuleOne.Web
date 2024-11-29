@@ -25,7 +25,7 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: './Prema.ShuleOne.Web.Server'  # Project root
+          context: './src'  # Project root
           file: './Prema.ShuleOne.Web.Server/Dockerfile'
           push: true
           tags: kimzdocker/prema.shuleone:latest
