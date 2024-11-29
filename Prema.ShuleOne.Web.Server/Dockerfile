@@ -14,7 +14,6 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Prema.ShuleOne.Web.Server.csproj", "."]
 COPY ["../prema.shuleone.web.client/prema.shuleone.web.client.esproj", "../prema.shuleone.web.client/"]
-COPY ["../Prema.ShuleOne.Web.ServiceDefaults/Prema.ShuleOne.Web.ServiceDefaults.csproj", "../Prema.ShuleOne.Web.ServiceDefaults/"]
 RUN dotnet restore "./Prema.ShuleOne.Web.Server.csproj"
 COPY . .
 WORKDIR "/src/."
