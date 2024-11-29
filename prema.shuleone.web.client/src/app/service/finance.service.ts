@@ -11,14 +11,18 @@ import { Student } from 'app/models/student.model';
   providedIn: 'root'
 })
 
-export class StudentService {
+export class FinanceService {
   private readonly keycloakService = inject(KeycloakService);
   private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
   async admitStudent(studentDetails: Student): Promise<Student | undefined> {
-    return this.http.post<Student>(`${this.apiUrl}/Student/Admit`, studentDetails).toPromise();
+    return this.http.post<Student>(`${this.apiUrl}/Finance/Pay`, studentDetails).toPromise();
   }
 
+  
+  async initiateMpesaPayment(paymentDetails: any): Promise<any | undefined> {
+    return this.http.post<any>(`${this.apiUrl}/Finance/InitiateMpesaPaymentPrompt`, paymentDetails).toPromise();
+  }
 }

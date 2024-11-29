@@ -40,8 +40,8 @@ public class MpesaRequestService
             PartyA = mpesaNumber,
             PartyB = 174379,
             PhoneNumber = mpesaNumber,
-            CallBackURL = "https://f650-41-57-106-66.ngrok-free.app/api/Finance/mpesa/callback",
-            AccountReference = "student_admn",
+            CallBackURL = "https://6ffd-41-90-172-36.ngrok-free.app/api/Finance/mpesa/callback",
+            AccountReference = "CHEPKOR",
             TransactionDesc = "Payment of X"
         };
 
@@ -124,13 +124,13 @@ public class MpesaRequestService
     public IActionResult ProcessCallback([FromBody] MpesaCallback callback)
     {
         // Validate input
-        if (callback?.Body?.StkCallback == null)
+        if (callback?.Body?.stkCallback == null)
         {
             return new BadRequestResult();
         }
 
         // Handle different callback scenarios
-        switch (callback.Body.StkCallback.ResultCode)
+        switch (callback.Body.stkCallback.ResultCode)
         {
             case 0: // Successful transaction
                 return ProcessSuccessfulTransaction(callback);
@@ -145,7 +145,7 @@ public class MpesaRequestService
 
     private IActionResult ProcessSuccessfulTransaction(MpesaCallback callback)
     {
-        var stkCallback = callback.Body.StkCallback;
+        var stkCallback = callback.Body.stkCallback;
 
         // Extract transaction details
         var amount = stkCallback.CallbackMetadata?.Item?
@@ -172,7 +172,7 @@ public class MpesaRequestService
 
     private IActionResult ProcessCancelledTransaction(MpesaCallback callback)
     {
-        var stkCallback = callback.Body.StkCallback;
+        var stkCallback = callback.Body.stkCallback;
 
         // Log cancellation
         Console.WriteLine($"Transaction Canceled: " +
@@ -184,7 +184,7 @@ public class MpesaRequestService
 
     private IActionResult ProcessFailedTransaction(MpesaCallback callback)
     {
-        var stkCallback = callback.Body.StkCallback;
+        var stkCallback = callback.Body.stkCallback;
 
         // Log failure
         Console.WriteLine($"Transaction Failed: " +
@@ -201,7 +201,7 @@ public class MpesaRequestService
 
     public class Body
     {
-        public StkCallback StkCallback { get; set; }
+        public StkCallback stkCallback { get; set; }
     }
 
     public class StkCallback
@@ -210,7 +210,7 @@ public class MpesaRequestService
         public string CheckoutRequestID { get; set; }
         public int ResultCode { get; set; }
         public string ResultDesc { get; set; }
-        public CallbackMetadata CallbackMetadata { get; set; }
+        public CallbackMetadata? CallbackMetadata { get; set; }
     }
 
     public class CallbackMetadata

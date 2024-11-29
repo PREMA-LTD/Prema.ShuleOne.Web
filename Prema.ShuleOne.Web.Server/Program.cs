@@ -11,6 +11,7 @@ using Prema.ShuleOne.Web.Server.Telegram;
 using Prema.ShuleOne.Web.Server.AutoMapper;
 using Prema.ShuleOne.Web.Server.Controllers;
 using Prema.ShuleOne.Web.Server.Services;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
