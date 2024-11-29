@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'Prema.ShuleOne.Web.Server/**'  # This will watch for changes in the Server directory
   workflow_dispatch:
 jobs:
   push_to_registry:
@@ -23,4 +21,4 @@ jobs:
         with:
           context: ./Prema.ShuleOne.Web.Server  # Ensure the context points to the server directory
           push: true
-          tags: kimzdocker/prema.shuleone.web.server:latest
+          tags: kimzdocker/prema.shuleone:latest
