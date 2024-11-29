@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master    
+    paths:
+      - 'Prema.ShuleOne.Web.Server/**'  # This will watch for changes in the Backend directory
   workflow_dispatch:
 jobs:
   push_to_registry:
@@ -19,7 +21,6 @@ jobs:
       - name: build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
-          context: ./  # Ensure the context points to the server directory
-          file: './Prema.ShuleOne.Web.Server/Dockerfile'
+          context: './Prema.ShuleOne.Web.Server'  # Ensure the context points to the server directory
           push: true
           tags: kimzdocker/prema.shuleone:latest
