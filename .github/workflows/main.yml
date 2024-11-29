@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - master    
-    paths:
-      - 'Prema.ShuleOne.Web.Server/**'
   workflow_dispatch:
 jobs:
   push_to_registry:
@@ -21,6 +19,7 @@ jobs:
       - name: build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
-          context: ./Prema.ShuleOne.Web.Server  # Ensure the context points to the server directory
+          context: ./  # Ensure the context points to the server directory
+          file: './Prema.ShuleOne.Web.Server/Dockerfile'
           push: true
           tags: kimzdocker/prema.shuleone:latest
