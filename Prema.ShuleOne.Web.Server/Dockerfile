@@ -20,7 +20,7 @@ FROM with-node AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj", "Prema.ShuleOne.Web.Server/"]
-# COPY ["prema.shuleone.web.client/prema.shuleone.web.client.esproj", "prema.shuleone.web.client/"]
+COPY ["prema.shuleone.web.client/prema.shuleone.web.client.esproj", "prema.shuleone.web.client/"]
 RUN dotnet restore "./Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj"
 COPY . .
 WORKDIR "/src/Prema.ShuleOne.Web.Server"
