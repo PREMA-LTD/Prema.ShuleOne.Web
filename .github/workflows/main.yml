@@ -2,7 +2,9 @@ name: Backend - Build and Push Docker Image to Docker Hub
 on:
   push:
     branches:
-      - master
+      - master    
+    paths:
+      - 'Prema.ShuleOne.Web.Server/**'
   workflow_dispatch:
 jobs:
   push_to_registry:
@@ -19,5 +21,6 @@ jobs:
       - name: build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
+          context: ./Prema.ShuleOne.Web.Server  # Ensure the context points to the server directory
           push: true
           tags: kimzdocker/prema.shuleone:latest
