@@ -3,6 +3,7 @@ using System.Buffers.Text;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
@@ -39,8 +40,8 @@ public class MpesaRequestService
             PartyA = mpesaNumber,
             PartyB = 174379,
             PhoneNumber = mpesaNumber,
-            CallBackURL = "https://mydomain.com/path",
-            AccountReference = "CompanyXLTD",
+            CallBackURL = "https://f650-41-57-106-66.ngrok-free.app/api/Finance/mpesa/callback",
+            AccountReference = "student_admn",
             TransactionDesc = "Payment of X"
         };
 
@@ -118,5 +119,108 @@ public class MpesaRequestService
     private static string GenerateAuthToken(string key, string secret)
     {
         return Base64UrlEncoder.Encode($"{key}:{secret}");
+    }
+
+    public IActionResult ProcessCallback([FromBody] MpesaCallback callback)
+    {
+        // Validate input
+        if (callback?.Body?.StkCallback == null)
+        {
+            return new BadRequestResult();
+        }
+
+        // Handle different callback scenarios
+        switch (callback.Body.StkCallback.ResultCode)
+        {
+            case 0: // Successful transaction
+                return ProcessSuccessfulTransaction(callback);
+
+            case 1032: // User canceled
+                return ProcessCancelledTransaction(callback);
+
+            default: // Other error codes
+                return ProcessFailedTransaction(callback);
+        }
+    }
+
+    private IActionResult ProcessSuccessfulTransaction(MpesaCallback callback)
+    {
+        var stkCallback = callback.Body.StkCallback;
+
+        // Extract transaction details
+        var amount = stkCallback.CallbackMetadata?.Item?
+            .FirstOrDefault(i => i.Name == "Amount")?.Value;
+
+        var mpesaReceiptNumber = stkCallback.CallbackMetadata?.Item?
+            .FirstOrDefault(i => i.Name == "MpesaReceiptNumber")?.Value;
+
+        var phoneNumber = stkCallback.CallbackMetadata?.Item?
+            .FirstOrDefault(i => i.Name == "PhoneNumber")?.Value;
+
+        var transactionDate = stkCallback.CallbackMetadata?.Item?
+            .FirstOrDefault(i => i.Name == "TransactionDate")?.Value;
+
+        // Log or process the successful transaction
+        Console.WriteLine($"Successful Transaction: " +
+            $"Amount: {amount}, " +
+            $"Receipt: {mpesaReceiptNumber}, " +
+            $"Phone: {phoneNumber}, " +
+            $"Date: {transactionDate}");
+
+        return new OkResult();
+    }
+
+    private IActionResult ProcessCancelledTransaction(MpesaCallback callback)
+    {
+        var stkCallback = callback.Body.StkCallback;
+
+        // Log cancellation
+        Console.WriteLine($"Transaction Canceled: " +
+            $"MerchantRequestID: {stkCallback.MerchantRequestID}, " +
+            $"CheckoutRequestID: {stkCallback.CheckoutRequestID}");
+
+        return new OkResult();
+    }
+
+    private IActionResult ProcessFailedTransaction(MpesaCallback callback)
+    {
+        var stkCallback = callback.Body.StkCallback;
+
+        // Log failure
+        Console.WriteLine($"Transaction Failed: " +
+            $"Result Code: {stkCallback.ResultCode}, " +
+            $"Description: {stkCallback.ResultDesc}");
+
+        return new OkResult();
+    }
+
+    public class MpesaCallback
+    {
+        public Body Body { get; set; }
+    }
+
+    public class Body
+    {
+        public StkCallback StkCallback { get; set; }
+    }
+
+    public class StkCallback
+    {
+        public string MerchantRequestID { get; set; }
+        public string CheckoutRequestID { get; set; }
+        public int ResultCode { get; set; }
+        public string ResultDesc { get; set; }
+        public CallbackMetadata CallbackMetadata { get; set; }
+    }
+
+    public class CallbackMetadata
+    {
+        public List<MetadataItem> Item { get; set; }
+    }
+
+    public class MetadataItem
+    {
+        public string Name { get; set; }
+        public dynamic Value { get; set; }
     }
 }
