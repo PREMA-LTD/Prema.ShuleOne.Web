@@ -29,6 +29,7 @@ COPY . .
 # Use a base image with Node.js 18 or later
 FROM node:22 AS build
 WORKDIR /src/prema.shuleone.web.client
+COPY ./package*.json ./
 RUN npm install
 RUN npm run build --prod
 
