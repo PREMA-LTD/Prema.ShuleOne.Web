@@ -43,20 +43,20 @@ export class FinanceMpesaStkPushComponent implements OnInit {
   }
 
   async submitForm() {
-    try{
+    try {
       
-    const paymentDetails = this.mpesaPaymentForm.value;
+        const paymentDetails = this.mpesaPaymentForm.value;
 
-    const phoneNumber = paymentDetails.mpesaNumber;
-    const formattedNumber = phoneNumber.replace(/^0/, "254");
+        const phoneNumber = paymentDetails.mpesaNumber;
+        const formattedNumber = phoneNumber.replace(/^0/, "254");
 
-    paymentDetails.mpesaNumber = formattedNumber;
-    paymentDetails.feeType = this.paymentData.feeType;
-    paymentDetails.amount = this.paymentData.amount;
+        paymentDetails.mpesaNumber = formattedNumber;
+        paymentDetails.feeType = this.paymentData.feeType;
+        paymentDetails.amount = this.paymentData.amount;
 
-    console.log(JSON.stringify(paymentDetails))
+        console.log(JSON.stringify(paymentDetails))
 
-    const response = await this.financeService.initiateMpesaPayment(paymentDetails)
+        const response = await this.financeService.initiateMpesaPayment(paymentDetails)
       
         if(response){
         this._snackBar.open('Mpesa payment prompt sent successfully.', 'Ok', {
