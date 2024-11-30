@@ -31,7 +31,7 @@ FROM node:22 AS build
 WORKDIR ./prema.shuleone.web.client
 COPY package*.json ./
 RUN npm install
-COPY ./Prema.ShuleOne.Web.Client/ .
+COPY ./prema.shuleone.web.client/ .
 RUN npm run build --prod
 
 # Build .NET project
