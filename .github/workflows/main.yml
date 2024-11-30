@@ -23,12 +23,12 @@ jobs:
 
       - name: install dependencies
         run: |
-          cd Prema.ChamaOne.Frontend
+          cd prema.shuleone.web.client
           npm install
 
       - name: build angular project
         run: |
-          cd Prema.ChamaOne.Frontend
+          cd prema.shuleone.web.client
           npm run build --prod
           
       - name: Login to Docker Registry
