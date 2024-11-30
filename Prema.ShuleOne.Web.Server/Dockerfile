@@ -11,39 +11,52 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 # Install Node.js for Angular builds
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
-# Copy project files
+# Copy .NET project files
 COPY Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj Prema.ShuleOne.Web.Server/
-COPY prema.shuleone.web.client/prema.shuleone.web.client.esproj prema.shuleone.web.client/
 COPY Prema.ShuleOne.Web.ServiceDefaults/Prema.ShuleOne.Web.ServiceDefaults.csproj Prema.ShuleOne.Web.ServiceDefaults/
 
 # Restore .NET dependencies
 RUN dotnet restore Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj
 
-# Copy all source files
-COPY . .
+# Build Angular project (Node.js Stage)
+FROM node:18 AS angular_build
+WORKDIR /src/prema.shuleone.web.client
 
-# Build Angular project
-# Use a base image with Node.js 18 or later
-FROM node:22 AS build
-WORKDIR ./prema.shuleone.web.client
-COPY package*.json ./
+# Copy Angular project files
+COPY prema.shuleone.web.client/package*.json ./
+
+# Install dependencies
 RUN npm install
-COPY ./prema.shuleone.web.client/ .
+
+# Copy the rest of the Angular source files
+COPY prema.shuleone.web.client/ .
+
+# Build the Angular project
 RUN npm run build --prod
 
 # Build .NET project
+FROM build AS dotnet_build
+WORKDIR /src
+COPY . .
 WORKDIR /src/Prema.ShuleOne.Web.Server
 RUN dotnet build -c $BUILD_CONFIGURATION -o /app/build
 
-# Publish stage for .NET
-FROM build AS publish
+# Publish .NET app
+FROM dotnet_build AS publish
 RUN dotnet publish -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Final runtime image
 FROM base AS final
 WORKDIR /app
+
+# Copy published .NET files
 COPY --from=publish /app/publish .
+
+# Copy Angular build output to .NET's wwwroot
+COPY --from=angular_build /src/prema.shuleone.web.client/dist/prema.shuleone.web.client wwwroot/
+
+# Set the entry point
 ENTRYPOINT ["dotnet", "Prema.ShuleOne.Web.Server.dll"]
