@@ -19,7 +19,7 @@ jobs:
       - name: set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '19'  # Use the appropriate Node.js version for your Angular project
+          node-version: '22'  # Use the appropriate Node.js version for your Angular project
 
       - name: install dependencies
         run: |
