@@ -26,6 +26,8 @@ RUN dotnet restore Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj
 COPY . .
 
 # Build Angular project
+# Use a base image with Node.js 18 or later
+FROM node:22 AS build
 WORKDIR /src/prema.shuleone.web.client
 RUN npm install
 RUN npm run build --prod
