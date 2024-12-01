@@ -55,16 +55,14 @@ WORKDIR /app
 # Copy published .NET files
 COPY --from=publish /app/publish .
 
-# Copy Angular build output to .NET's wwwroot
-COPY --from=angular_build /src/prema.shuleone.web.client/dist/prema.shuleone.web.client wwwroot/
 
-# Copy the csv file to the image
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
 # Ensure the directory exists before copying the file
 RUN mkdir -p ./Database/LocationData
 COPY ["Database/LocationData/kenya-location-data.csv", "./Database/LocationData/"]
+
+# Copy Angular build output to .NET's wwwroot
+COPY --from=angular_build /src/prema.shuleone.web.client/dist/prema.shuleone.web.client wwwroot/
+
 
 # Set the entry point
 ENTRYPOINT ["dotnet", "Prema.ShuleOne.Web.Server.dll"]
