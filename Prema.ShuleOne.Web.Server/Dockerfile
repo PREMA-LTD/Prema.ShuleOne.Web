@@ -19,9 +19,9 @@ COPY Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj Prema.ShuleOne.W
 COPY Prema.ShuleOne.Web.ServiceDefaults/Prema.ShuleOne.Web.ServiceDefaults.csproj Prema.ShuleOne.Web.ServiceDefaults/
 
 # Ensure directory exists and copy the file to the runtime image
-WORKDIR /app
+ # WORKDIR /app
 RUN mkdir -p /app/Database/LocationData
-COPY /src/Prema.ShuleOne.Web.Server/Database/LocationData/kenya-location-data.csv /app/Database/LocationData/
+COPY Prema.ShuleOne.Web.Server/Database/LocationData/kenya-location-data.csv /app/Database/LocationData/
 
 
 # Restore .NET dependencies
