@@ -18,9 +18,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 COPY Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj Prema.ShuleOne.Web.Server/
 COPY Prema.ShuleOne.Web.ServiceDefaults/Prema.ShuleOne.Web.ServiceDefaults.csproj Prema.ShuleOne.Web.ServiceDefaults/
 
-# Ensure the directory exists before copying the file
-RUN mkdir -p ./Database/LocationData
-COPY ["Prema.ShuleOne.Web.Server/Database/LocationData/kenya-location-data.csv", "./Database/LocationData/"]
+# Ensure directory exists and copy the file to the runtime image
+WORKDIR /app
+RUN mkdir -p /app/Database/LocationData
+COPY --from=build /src/Prema.ShuleOne.Web.Server/Database/LocationData/kenya-location-data.csv /app/Database/LocationData/
+
 
 # Restore .NET dependencies
 RUN dotnet restore Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj
