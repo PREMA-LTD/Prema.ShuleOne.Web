@@ -18,6 +18,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 COPY Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj Prema.ShuleOne.Web.Server/
 COPY Prema.ShuleOne.Web.ServiceDefaults/Prema.ShuleOne.Web.ServiceDefaults.csproj Prema.ShuleOne.Web.ServiceDefaults/
 
+# Ensure the directory exists before copying the file
+RUN mkdir -p ./Database/LocationData
+COPY ["Prema.ShuleOne.Web.Server/Database/LocationData/kenya-location-data.csv", "./Database/LocationData/"]
+
 # Restore .NET dependencies
 RUN dotnet restore Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj
 
@@ -56,9 +60,6 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 
 
-# Ensure the directory exists before copying the file
-RUN mkdir -p ./Database/LocationData
-COPY ["Database/LocationData/kenya-location-data.csv", "./Database/LocationData/"]
 
 # Copy Angular build output to .NET's wwwroot
 COPY --from=angular_build /src/prema.shuleone.web.client/dist/prema.shuleone.web.client wwwroot/
