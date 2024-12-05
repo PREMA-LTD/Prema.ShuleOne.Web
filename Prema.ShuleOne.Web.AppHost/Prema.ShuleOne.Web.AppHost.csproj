@@ -1,16 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0" />
+	
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+	<TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
-    <UserSecretsId>65784efa-b37e-43d5-866c-0137340bcad1</UserSecretsId>
+    <UserSecretsId>5e420279-eacf-4e85-b368-ed206971fa7a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="8.1.0" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="8.2.2" />
+    <PackageReference Include="Aspire.Hosting.MySql" Version="9.0.0" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.0.0" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,4 +24,7 @@
     <ProjectReference Include="..\Prema.ShuleOne.Web.Server\Prema.ShuleOne.Web.Server.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0" />
+	</ItemGroup>
 </Project>

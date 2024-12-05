@@ -28,22 +28,24 @@ builder.Services.AddCors(options =>
 
 
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-string connectionString = builder.Configuration.GetConnectionString("MySqlConnectionString")!;
-var serverVersion = new MySqlServerVersion(new Version(8, 0, 29));
+//string connectionString = builder.Configuration.GetConnectionString("postgres")!;
+//var serverVersion = new MySqlServerVersion(new Version(8, 0, 29));
 
-builder.Services.AddDbContext<ShuleOneDatabaseContext>(
-    dbContextOptions => dbContextOptions
-        .UseMySql(connectionString, serverVersion,
-            options => options.EnableRetryOnFailure()) // Enable transient error resiliency
-        .LogTo(Console.WriteLine, LogLevel.Information)
-        .EnableSensitiveDataLogging()
-        .EnableDetailedErrors()
-);
+//builder.Services.AddDbContext<ShuleOneDatabaseContext>(
+//    dbContextOptions => dbContextOptions
+//        .UseMySql(connectionString, serverVersion,
+//            options => options.EnableRetryOnFailure()) // Enable transient error resiliency
+//        .LogTo(Console.WriteLine, LogLevel.Information)
+//        .EnableSensitiveDataLogging()
+//        .EnableDetailedErrors()
+//);
 
+//builder.AddNpgsqlDataSource("shuleone-db");
+builder.AddNpgsqlDbContext<ShuleOneDatabaseContext>("postgres");
 
 builder.Services.AddSingleton<IBulkSms, MobileSasa>();
 builder.Services.Configure<MobileSasaSettings>(builder.Configuration.GetSection("MobileSasa"));
@@ -67,11 +69,13 @@ builder.Services.AddMassTransit(x =>
     x.UsingRabbitMq((context, cfg) =>
     {
         // Use configuration values for RabbitMQ connection
-        cfg.Host(rabbitMqConfig["Host"], Convert.ToUInt16(rabbitMqConfig["Port"]), rabbitMqConfig["VirtualHost"], h =>
-        {
-            h.Username(rabbitMqConfig["Username"]);
-            h.Password(rabbitMqConfig["Password"]);
-        });
+        //cfg.Host(rabbitMqConfig["Host"], Convert.ToUInt16(rabbitMqConfig["Port"]), rabbitMqConfig["VirtualHost"], h =>
+        //{
+        //    h.Username(rabbitMqConfig["Username"]);
+        //    h.Password(rabbitMqConfig["Password"]);
+        //});
+
+        cfg.Host(builder.Configuration.GetConnectionString("shuleone-rabbitmq"));
     });
 });
 
