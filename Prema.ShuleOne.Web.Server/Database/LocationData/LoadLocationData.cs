@@ -1,18 +1,32 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using Prema.ShuleOne.Web.Server.Models.Location;
-using System.Formats.Asn1;
 using System.Globalization;
+using System.IO;
 
 namespace Prema.ShuleOne.Web.Server.Database.LocationData
 {
     public static class LoadLocationData
     {
+        // Existing method for loading CSV from a file
         public static List<(County, Subcounty, Ward)> LoadCsvData(string filePath)
+        {
+            var csvContent = File.ReadAllText(filePath);
+            return ParseCsvContent(csvContent);
+        }
+
+        // New method for loading CSV from raw content
+        public static List<(County, Subcounty, Ward)> LoadCsvDataFromContent(string csvContent)
+        {
+            return ParseCsvContent(csvContent);
+        }
+
+        // Shared method to parse CSV content
+        private static List<(County, Subcounty, Ward)> ParseCsvContent(string csvContent)
         {
             var records = new List<(County, Subcounty, Ward)>();
 
-            using (var reader = new StreamReader(filePath))
+            using (var reader = new StringReader(csvContent))
             using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
             {
                 csv.Read();

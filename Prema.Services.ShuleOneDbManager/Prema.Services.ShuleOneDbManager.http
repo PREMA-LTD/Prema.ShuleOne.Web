@@ -1,0 +1,6 @@
+@Prema.Services.ShuleOneDbManager_HostAddress = http://localhost:5159
+
+GET {{Prema.Services.ShuleOneDbManager_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

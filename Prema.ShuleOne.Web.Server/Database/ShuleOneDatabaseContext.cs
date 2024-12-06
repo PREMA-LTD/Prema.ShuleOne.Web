@@ -35,8 +35,9 @@ namespace Prema.ShuleOne.Web.Server.Database
             //    new Gender { id = 2, name = "Female" }
             //);
 
-            var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Database", "LocationData", "kenya-location-data.csv");
-            var records = LoadLocationData.LoadCsvData(csvFilePath);
+            //var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Database", "LocationData", "kenya-location-data.csv");
+            var csvFilePath = "https://raw.githubusercontent.com/enockkim/location-data-files/refs/heads/main/kenya-location-data.csv";
+            var records = LoadLocationData.LoadCsvDataFromContent(csvFilePath);
 
             var counties = records.Select(r => r.Item1).DistinctBy(c => c.id).ToList();
             var subcounties = records.Select(r => r.Item2).DistinctBy(c => c.id).ToList();

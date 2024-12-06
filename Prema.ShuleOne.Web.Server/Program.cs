@@ -32,8 +32,23 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//string connectionString = builder.Configuration.GetConnectionString("postgres")!;
-//var serverVersion = new MySqlServerVersion(new Version(8, 0, 29));
+string connectionString = builder.Configuration.GetConnectionString("MySqlConnectionString")!;
+var serverVersion = new MySqlServerVersion(new Version(8, 0, 29));
+
+builder.Services.AddDbContext<ShuleOneDatabaseContext>(
+    dbContextOptions => dbContextOptions
+        .UseMySql(connectionString, serverVersion,
+            options => options.EnableRetryOnFailure()) // Enable transient error resiliency
+        .LogTo(Console.WriteLine, LogLevel.Information)
+        .EnableSensitiveDataLogging()
+        .EnableDetailedErrors()
+);
+
+//builder.AddNpgsqlDataSource("shuleone-db");
+//builder.AddNpgsqlDbContext<ShuleOneDatabaseContext>("postgresqldb");
+//builder.AddSqlServerDbContext<ShuleOneDatabaseContext>("sqlserverDb");
+//builder.AddMySqlDbContext<ShuleOneDatabaseContext>("mysql");
+//builder.AddMySqlDbContext<ShuleOneDatabaseContext>("mysqldb");
 
 //builder.Services.AddDbContext<ShuleOneDatabaseContext>(
 //    dbContextOptions => dbContextOptions
@@ -44,8 +59,6 @@ builder.Services.AddSwaggerGen();
 //        .EnableDetailedErrors()
 //);
 
-//builder.AddNpgsqlDataSource("shuleone-db");
-builder.AddNpgsqlDbContext<ShuleOneDatabaseContext>("postgres");
 
 builder.Services.AddSingleton<IBulkSms, MobileSasa>();
 builder.Services.Configure<MobileSasaSettings>(builder.Configuration.GetSection("MobileSasa"));
@@ -75,7 +88,7 @@ builder.Services.AddMassTransit(x =>
         //    h.Password(rabbitMqConfig["Password"]);
         //});
 
-        cfg.Host(builder.Configuration.GetConnectionString("shuleone-rabbitmq"));
+        cfg.Host(builder.Configuration.GetConnectionString("rabbitmq"));
     });
 });
 
