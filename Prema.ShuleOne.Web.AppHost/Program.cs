@@ -1,6 +1,8 @@
+using Aspire.Hosting;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-var databaseName = "shuleone-db"; // MySql database & table names are case-sensitive on non-Windows.
+//var databaseName = "shuleone-db"; // MySql database & table names are case-sensitive on non-Windows.
 
 //missing.nrt 9 version for pomelo
 //var mysql = builder.AddMySql("mysql")
@@ -56,6 +58,9 @@ var databaseName = "shuleone-db"; // MySql database & table names are case-sensi
 //// Add the database to the application model so that it can be referenced by other resources.
 //var sqlserverDb = sqlserver.AddDatabase(databaseName);
 
+var redis = builder.AddRedis("redis")
+    .WithRedisInsight();
+
 var rabbitmq = builder.AddRabbitMQ("rabbitmq")
     .WithManagementPlugin();
 
@@ -77,6 +82,17 @@ builder.AddProject<Projects.prema_shuleone_web_client>("client");
 builder.AddProject<Projects.Prema_Services_UnifiedNotifier>("unified-notifier")
     .WithReference(rabbitmq)
     .WaitFor(rabbitmq);
+
+//builder.AddProject<Projects.Prema_Services_MigrationService>("migration-service")
+//    .WithReference(postgresqldb)
+//    .WaitFor(postgresqldb);
+
+
+builder.AddProject<Projects.Prema_Services_StorageHub>("storagehub")
+    .WithReference(rabbitmq)
+    .WaitFor(rabbitmq)
+    .WithReference(redis)
+    .WaitFor(redis);
 
 //builder.AddProject<Projects.Prema_Services_MigrationService>("migration-service")
 //    .WithReference(postgresqldb)

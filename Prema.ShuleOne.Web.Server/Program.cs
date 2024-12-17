@@ -12,6 +12,7 @@ using Prema.ShuleOne.Web.Server.AutoMapper;
 using Prema.ShuleOne.Web.Server.Controllers;
 using Prema.ShuleOne.Web.Server.Services;
 using Microsoft.Extensions.Hosting;
+using Prema.ShuleOne.Web.Server.Endpoints.Reports;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +22,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder
-            .WithOrigins("https://localhost:4200", "https://fintrack.shangilia.africa") // Update this with your Angular app's URL
+            .WithOrigins("https://localhost:4200", "https://fintrack.shangilia.africa", "http://localhost:5185") // Update this with your Angular app's URL
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -66,6 +67,7 @@ builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection
 builder.Services.AddSingleton<TelegramBot>();
 builder.Services.AddSingleton<Logger>();
 builder.Services.AddSingleton<MpesaRequestService>();
+builder.Services.AddScoped<FileGeneratorService>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
@@ -117,6 +119,8 @@ app.MapStudentEndpoints();
 app.MapLocationEndpoints();
 
 app.MapFinanceEndpints();
+
+app.MapReportsEndpoint();
 
 app.Run();
 

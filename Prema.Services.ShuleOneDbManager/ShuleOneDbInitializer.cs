@@ -1,7 +1,10 @@
 ﻿using System.Diagnostics;
+using MassTransit;
+using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Prema.ShuleOne.Web.Server.Database;
 using Prema.ShuleOne.Web.Server.Database.LocationData;
+using Prema.ShuleOne.Web.Server.Models;
 
 
 namespace Prema.Services.ShuleOneDbManager;
@@ -39,6 +42,59 @@ internal class ShuleOneDbInitializer(IServiceProvider serviceProvider, ILogger<S
         // Ensure the database is created
         await dbContext.Database.EnsureCreatedAsync(cancellationToken);
 
+        await InsertLocationData(dbContext, cancellationToken);
+        await InsertGrades(dbContext, cancellationToken);
+        await InsertFeeTypes(dbContext, cancellationToken);
+
+
+    }
+
+    private static async Task InsertFeeTypes(ShuleOneDatabaseContext dbContext, CancellationToken cancellationToken)
+    {
+
+        // Extract distinct counties, subcounties, and wards
+        var feeType = Enum.GetValues(typeof(FeeTypes))
+            .Cast<FeeTypes>()
+            .Select(ft => new FeeType
+            {
+                id = (int)ft, // Assuming Id is the primary key
+                name = ft.ToString() // Assuming Name is a column for the grade name
+            }).ToList();
+
+        if (dbContext.FeeType.Count() == 0)
+        {
+            // Seed the data into the database
+            await dbContext.FeeType.AddRangeAsync(feeType, cancellationToken);
+
+            // Save changes
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private static async Task InsertGrades(ShuleOneDatabaseContext dbContext, CancellationToken cancellationToken)
+    {
+
+        // Extract distinct counties, subcounties, and wards
+        var grades = Enum.GetValues(typeof(Grades))
+            .Cast<Grades>()
+            .Select(g => new Grade
+            {
+                id = (int)g, // Assuming Id is the primary key
+                name = g.ToString() // Assuming Name is a column for the grade name
+            }).ToList();
+
+        if (dbContext.Grade.Count() == 0)
+        {
+            // Seed the data into the database
+            await dbContext.Grade.AddRangeAsync(grades, cancellationToken);
+
+            // Save changes
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private static async Task InsertLocationData(ShuleOneDatabaseContext dbContext, CancellationToken cancellationToken)
+    {
         // Define the CSV file URL
         var csvFilePath = "https://raw.githubusercontent.com/enockkim/location-data-files/refs/heads/main/kenya-location-data.csv";
 

@@ -29,24 +29,6 @@ namespace Prema.ShuleOne.Web.Server.Database
             base.OnModelCreating(builder);
 
             this.OnModelBuilding(builder);
-
-            //builder.Entity<Gender>().HasData(
-            //    new Gender { id = 1, name = "Male" },
-            //    new Gender { id = 2, name = "Female" }
-            //);
-
-            //var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Database", "LocationData", "kenya-location-data.csv");
-            var csvFilePath = "https://raw.githubusercontent.com/enockkim/location-data-files/refs/heads/main/kenya-location-data.csv";
-            var records = LoadLocationData.LoadCsvDataFromContent(csvFilePath);
-
-            var counties = records.Select(r => r.Item1).DistinctBy(c => c.id).ToList();
-            var subcounties = records.Select(r => r.Item2).DistinctBy(c => c.id).ToList();
-            var wards = records.Select(r => r.Item3).DistinctBy(w => w.id).ToList();
-
-            builder.Entity<County>().HasData(counties);
-            builder.Entity<Subcounty>().HasData(subcounties);
-            builder.Entity<Ward>().HasData(wards);
-
         }
 
         public DbSet<County> County { get; set; }
@@ -60,6 +42,10 @@ namespace Prema.ShuleOne.Web.Server.Database
         public DbSet<Teacher> Teacher { get; set; }
         public DbSet<SMSRecord> SMSRecord { get; set; }
         public DbSet<SMSFailure> SMSFailure { get; set; }
+        public DbSet<Grade> Grade { get; set; }
+        public DbSet<TutionFeesStructure> TutionFeesStructure { get; set; }
+        public DbSet<FeeType> FeeType { get; set; }
+        public DbSet<Document> Document { get; set; }
     }
 
 }

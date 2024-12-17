@@ -3,7 +3,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { KeycloakService } from '@core/authentication/keycloak.service';
 import { County, LocationData, Subcounty, Ward } from 'app/models/location.model';
-import { Relationship, Student } from 'app/models/student.model';
+import { AdmissionStatus, Relationship, Student } from 'app/models/student.model';
 import { LocationService } from 'app/service/location.service';
 import { StudentService } from 'app/service/student.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -356,6 +356,7 @@ export class AdmissionFormComponent {
         occupation: secondaryContactData?.secondaryContactOccupation,
         relationship: secondaryContactData?.secondaryContactRelationship
       },
+      admission_status: AdmissionStatus.Pending
     };
 
     console.log('studentAdmissionData:', studentAdmissionData);

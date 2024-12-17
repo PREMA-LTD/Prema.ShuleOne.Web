@@ -21,4 +21,8 @@ export class StudentService {
     return this.http.post<Student>(`${this.apiUrl}/Student/Admit`, studentDetails).toPromise();
   }
 
+  async getStudents(): Promise<Observable<Student[]>> {
+    return this.http.get<Student[]>(`${this.apiUrl}/Student`);
+  }
+
 }

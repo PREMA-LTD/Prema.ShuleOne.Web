@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prema.Services.MigrationSer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prema.Services.ShuleOneDbManager", "Prema.Services.ShuleOneDbManager\Prema.Services.ShuleOneDbManager.csproj", "{DEC43164-8CE4-421E-858D-AB912F71C2B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prema.Services.StorageHub", "Prema.Services.StorageHub\Prema.Services.StorageHub.csproj", "{BE39F9E0-D3A2-4FB5-922F-85A83F48B049}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{DEC43164-8CE4-421E-858D-AB912F71C2B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DEC43164-8CE4-421E-858D-AB912F71C2B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DEC43164-8CE4-421E-858D-AB912F71C2B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE39F9E0-D3A2-4FB5-922F-85A83F48B049}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE39F9E0-D3A2-4FB5-922F-85A83F48B049}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE39F9E0-D3A2-4FB5-922F-85A83F48B049}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE39F9E0-D3A2-4FB5-922F-85A83F48B049}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

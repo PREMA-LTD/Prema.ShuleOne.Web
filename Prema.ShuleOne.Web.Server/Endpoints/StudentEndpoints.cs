@@ -86,7 +86,8 @@ public static class StudentEndpoints
                 assessment_no = studentDto.assessment_no,
                 birth_cert_entry_no = studentDto.birth_cert_entry_no,
                 medical_needs = studentDto.medical_needs,
-                date_of_birth = studentDto.date_of_birth
+                date_of_birth = studentDto.date_of_birth,
+                admission_status = AdmissionStatus.Pending
             };
             db.Student.Add(student);
             await db.SaveChangesAsync();
@@ -137,12 +138,12 @@ public static class StudentEndpoints
             await db.SaveChangesAsync();
 
             //send message to parent/guardian
-            string parentName = $"{primaryContact.other_names} {primaryContact.surname}";
-            string childName = $"{student.other_names} {student.surname}";
-            string message = $"Dear {parentName}, your child, {childName}, has been admitted to Lifeway Christian School. Admission No: {student.id}. Welcome to an exciting learning journey with us!";
+            //string parentName = $"{primaryContact.other_names} {primaryContact.surname}";
+            //string childName = $"{student.other_names} {student.surname}";
+            //string message = $"Dear {parentName}, your child, {childName}, has been admitted to Lifeway Christian School. Admission No: {student.id}. Welcome to an exciting learning journey with us!";
 
 
-            await mobileSasa.SendSms(primaryContact.phone_number, parentName, message);
+            //await mobileSasa.SendSms(primaryContact.phone_number, parentName, message);
 
             return TypedResults.Created($"/api/Student/{student.id}", student);
         })

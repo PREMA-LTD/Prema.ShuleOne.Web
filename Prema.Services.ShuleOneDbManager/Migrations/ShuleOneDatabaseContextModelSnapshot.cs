@@ -22,6 +22,41 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Document", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id"));
+
+                    b.Property<DateTime>("date_created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("date_updated")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("document_type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("file_name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("fk_created_by")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("fk_student_id")
+                        .HasColumnType("int");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("fk_student_id");
+
+                    b.ToTable("document");
+                });
+
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Employee", b =>
                 {
                     b.Property<int>("id")
@@ -113,6 +148,39 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.HasKey("id");
 
                     b.ToTable("employee_bank_details");
+                });
+
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.FeeType", b =>
+                {
+                    b.Property<int>("id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("id");
+
+                    b.ToTable("fee_type");
+                });
+
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Grade", b =>
+                {
+                    b.Property<int>("id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Teacherid")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("Teacherid");
+
+                    b.ToTable("grade");
                 });
 
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Location.County", b =>
@@ -242,6 +310,9 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id"));
+
+                    b.Property<int>("admission_status")
+                        .HasColumnType("int");
 
                     b.Property<string>("assessment_no")
                         .IsRequired()
@@ -384,13 +455,43 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.ToTable("subject");
                 });
 
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.TutionFeesStructure", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id"));
+
+                    b.Property<decimal>("amount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<DateTime>("date_created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("date_updated")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("fk_grade_id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("term")
+                        .HasColumnType("int");
+
+                    b.Property<string>("updated_by")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("fk_grade_id");
+
+                    b.ToTable("tution_fees_structure");
+                });
+
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Teacher", b =>
                 {
                     b.HasBaseType("Prema.ShuleOne.Web.Server.Models.Employee");
-
-                    b.Property<string>("grades")
-                        .IsRequired()
-                        .HasColumnType("longtext");
 
                     b.Property<string>("highest_qualification")
                         .IsRequired()
@@ -410,6 +511,17 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.ToTable("teacher");
                 });
 
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Document", b =>
+                {
+                    b.HasOne("Prema.ShuleOne.Web.Server.Models.Student", "Student")
+                        .WithMany("Documents")
+                        .HasForeignKey("fk_student_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Employee", b =>
                 {
                     b.HasOne("Prema.ShuleOne.Web.Server.Models.EmployeeBankDetails", "EmployeeBankDetails")
@@ -427,6 +539,13 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.Navigation("EmployeeBankDetails");
 
                     b.Navigation("Ward");
+                });
+
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Grade", b =>
+                {
+                    b.HasOne("Prema.ShuleOne.Web.Server.Models.Teacher", null)
+                        .WithMany("grades")
+                        .HasForeignKey("Teacherid");
                 });
 
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Location.Subcounty", b =>
@@ -492,6 +611,17 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.Navigation("Ward");
                 });
 
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.TutionFeesStructure", b =>
+                {
+                    b.HasOne("Prema.ShuleOne.Web.Server.Models.Grade", "grade")
+                        .WithMany()
+                        .HasForeignKey("fk_grade_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("grade");
+                });
+
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Teacher", b =>
                 {
                     b.HasOne("Prema.ShuleOne.Web.Server.Models.Employee", null)
@@ -523,6 +653,16 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.SMSRecord", b =>
                 {
                     b.Navigation("SMSFailures");
+                });
+
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Student", b =>
+                {
+                    b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Teacher", b =>
+                {
+                    b.Navigation("grades");
                 });
 #pragma warning restore 612, 618
         }

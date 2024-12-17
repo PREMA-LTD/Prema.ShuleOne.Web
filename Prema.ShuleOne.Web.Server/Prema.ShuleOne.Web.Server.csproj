@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Adobe.PDFServicesSDK" Version="4.1.0" />
     <PackageReference Include="MassTransit" Version="8.3.1" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.11" />

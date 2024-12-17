@@ -17,6 +17,22 @@ export interface DateOfBirth {
     Guardian = 8,
     Other = 9
   }
+
+  export enum Grades
+  {
+      PlayGroup = 10,
+      PP1 = 11,
+      PP2 = 12,
+      One = 1,
+      Two = 2,
+      Three = 3,
+      Four = 4,
+      Five = 5,
+      Six = 6,
+      Seven = 7,
+      Eight = 8,
+      Nine = 9
+  }
   
   export interface Contact {
     id: number;
@@ -45,7 +61,7 @@ export interface DateOfBirth {
     gender: number;
     village_or_estate: string;
     fk_residence_ward_id: number;
-    current_grade: number;
+    current_grade: Grades;
     date_of_admission: string;
     upi: string;
     assessment_no: string;
@@ -54,5 +70,14 @@ export interface DateOfBirth {
     date_of_birth: string;
     primary_contact: Contact;
     secondary_contact: Contact | null;
+    admission_status: AdmissionStatus;
   }
   
+
+  
+  export enum AdmissionStatus
+  {
+      Pending = 1,
+      Admitted = 2,
+      Transfered = 3
+  }

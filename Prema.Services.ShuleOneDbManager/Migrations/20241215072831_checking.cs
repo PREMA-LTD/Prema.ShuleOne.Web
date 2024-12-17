@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Prema.Services.ShuleOneDbManager.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class checking : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -46,6 +46,20 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_employee_bank_details", x => x.id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "fee_type",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false),
+                    name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_fee_type", x => x.id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -218,6 +232,7 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     medical_needs = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     date_of_birth = table.Column<DateOnly>(type: "date", nullable: false),
+                    admission_status = table.Column<int>(type: "int", nullable: false),
                     surname = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     other_names = table.Column<string>(type: "longtext", nullable: false)
@@ -252,8 +267,6 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     subjects = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    grades = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     highest_qualification = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     start_date = table.Column<DateTime>(type: "datetime(6)", nullable: false)
@@ -265,6 +278,33 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                         name: "FK_teacher_employee_id",
                         column: x => x.id,
                         principalTable: "employee",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "document",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    document_type = table.Column<int>(type: "int", nullable: false),
+                    file_name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    date_created = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    date_updated = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    fk_created_by = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    fk_student_id = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_document", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_document_student_fk_student_id",
+                        column: x => x.fk_student_id,
+                        principalTable: "student",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -316,6 +356,57 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.CreateTable(
+                name: "grade",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false),
+                    name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Teacherid = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_grade", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_grade_teacher_Teacherid",
+                        column: x => x.Teacherid,
+                        principalTable: "teacher",
+                        principalColumn: "id");
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "tution_fees_structure",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    term = table.Column<int>(type: "int", nullable: false),
+                    amount = table.Column<decimal>(type: "decimal(65,30)", nullable: false),
+                    date_created = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    date_updated = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    updated_by = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    fk_grade_id = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tution_fees_structure", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_tution_fees_structure_grade_fk_grade_id",
+                        column: x => x.fk_grade_id,
+                        principalTable: "grade",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_document_fk_student_id",
+                table: "document",
+                column: "fk_student_id");
+
             migrationBuilder.CreateIndex(
                 name: "IX_employee_fk_employee_bank_details",
                 table: "employee",
@@ -325,6 +416,11 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                 name: "IX_employee_fk_residence_ward_id",
                 table: "employee",
                 column: "fk_residence_ward_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_grade_Teacherid",
+                table: "grade",
+                column: "Teacherid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_sms_failure_fk_sms_record_id",
@@ -352,6 +448,11 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                 column: "fk_county_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_tution_fees_structure_fk_grade_id",
+                table: "tution_fees_structure",
+                column: "fk_grade_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ward_fk_subcounty_id",
                 table: "ward",
                 column: "fk_subcounty_id");
@@ -360,6 +461,12 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "document");
+
+            migrationBuilder.DropTable(
+                name: "fee_type");
+
             migrationBuilder.DropTable(
                 name: "sms_failure");
 
@@ -370,13 +477,19 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                 name: "subject");
 
             migrationBuilder.DropTable(
-                name: "teacher");
+                name: "tution_fees_structure");
 
             migrationBuilder.DropTable(
                 name: "sms_record");
 
             migrationBuilder.DropTable(
                 name: "student");
+
+            migrationBuilder.DropTable(
+                name: "grade");
+
+            migrationBuilder.DropTable(
+                name: "teacher");
 
             migrationBuilder.DropTable(
                 name: "employee");

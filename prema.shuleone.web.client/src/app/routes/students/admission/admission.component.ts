@@ -1,8 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { MtxGridColumn } from '@ng-matero/extensions/grid';
 import { AdmissionFormComponent } from './admission_form/admission-form.component';
 import { MatDialog } from '@angular/material/dialog';
+import { StudentService } from 'app/service/student.service';
+import { finalize } from 'rxjs';
+import { Student } from 'app/models/student.model';
+import { KeycloakService } from 'keycloak-angular';
 
 @Component({
   selector: 'app-students-admission',
@@ -13,11 +17,31 @@ export class StudentsAdmissionComponent implements OnInit {
 
   constructor(public dialog: MatDialog) {}
 
+  private readonly studentService = inject(StudentService);
+  private readonly keycloakService = inject(KeycloakService);
 
   columns: MtxGridColumn[] = [
-    { header: 'Admission No', field: 'admission_no' },
-    { header: 'Grade', field: 'grade' },
-    { header: 'Name', field: 'name' }
+    { header: 'Admission No', field: 'id' },
+    { header: 'Surname', field: 'surname' },
+    { header: 'Other Names', field: 'other_names' },
+    {
+      header: 'Grade',
+      field: 'current_grade',
+      formatter: (data: any) => {
+          switch (data.current_grade) {
+              case 10:
+                  return 'PlayGroup';
+              case 11:
+                  return 'PP1';
+              case 12:
+                  return 'PP2';
+              default:
+                  return data.current_grade;
+          }
+      }
+  },
+  
+  
     // {
     //   header: 'Grade',
     //   field: 'grade',
@@ -28,23 +52,25 @@ export class StudentsAdmissionComponent implements OnInit {
     //     3: { text: 'Overdue', color: 'red-10' },
     //   },        
     // },
-    // {
-    //   header: 'Action',
-    //   field: 'action',
-    //   type: 'button',
-    //   buttons: [
-    //     {
-    //       text: 'Pay',
-    //       color: 'primary',
-    //       iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
-    //       click: (record: any) => this.openPayModal(record)
-    //     }
-    //   ]
-    // }
+    {
+      header: 'Action',
+      field: 'action',
+      type: 'button',
+      buttons: [
+        {
+          text: 'Admission Letter',
+          color: 'primary',
+          icon: "download",
+          iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
+          click: (studentRecord: Student) => this.getAdmissionLetter(studentRecord)
+        }
+      ]
+    }
   ];
 
+  //#region Table Functions
 
-  students: any[] = [];
+  students: Student[] = [];
   total = 0;
   isLoading = true;
 
@@ -84,19 +110,23 @@ export class StudentsAdmissionComponent implements OnInit {
   
   async getStudents() {
     this.isLoading = true;
+    
+    //for filtering
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);    
 
-    // (await this.remoteSrv
-    //   .getContributions(this.query.page, this.query.per_page, this.query.month, this.query.year, this.query. status, this.query.memberId))
-    //   .pipe(
-    //     finalize(() => {
-    //       this.isLoading = false;
-    //     })
-    //   )
-    //   .subscribe(res => {
-    //     this.list = res.contributions;
-    //     this.total = res.total;
-    //     this.isLoading = false;
-    //   });
+    (await this.studentService
+      .getStudents())
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe(res => {
+        this.students = res.filter(student => new Date(student.date_of_admission) > oneMonthAgo);
+        this.total = res.length;
+        this.isLoading = false;
+      });
   }
 
   admitNewStudent(){
@@ -111,7 +141,15 @@ export class StudentsAdmissionComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
+//#endregion
+
+  async ngOnInit() {
+    console.log("on init")
+    await this.getStudents();
+  }
+
+  async getAdmissionLetter(studentRecord: Student) {
+
   }
 
 }
