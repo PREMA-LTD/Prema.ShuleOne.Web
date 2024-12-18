@@ -5,7 +5,10 @@ using Google.Apis.Drive.v3;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using MassTransit;
+using Microsoft.Extensions.Options;
+using Prema.Services.StorageHub.AppSettings;
 using Prema.Services.StorageHub.Services;
+using Prema.Services.StorageHub.Workers;
 using Prema.Services.UnifiedNotifier.Consumers;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
@@ -18,6 +21,8 @@ builder.AddServiceDefaults();
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.Configure<GoogleDriveApiSettings>(builder.Configuration.GetSection("GoogleDriveApiSettings"));
 
 builder.Services.AddSingleton<FileStorageService>();
 
@@ -36,39 +41,38 @@ builder.Services.AddMassTransit(x =>
 
 builder.Services.AddSingleton<FileUploaderConsumer>();
 
-
-var googleCredentialsPath = builder.Configuration["GoogleCredentialsPath"];
-
 // Register Redis
 builder.AddRedisClient(connectionName: "redis");
 
+builder.Services.AddSingleton<TokenStore>();
+builder.Services.AddHostedService<GoogleAuthTokenRefreshService>();
+
 builder.Services.AddSingleton<DriveService>(sp =>
 {
-    var tokenResponse = new TokenResponse
-    {
-        AccessToken = "1//040GgdrnJ8uP7CgYIARAAGAQSNwF-L9IrmUT0nUWISKxVvTQfGgmtGaTG_66LkOS1DD_snBnymYlcc9IgdUIYSYpu6i5-uXSZ1KY",
-        RefreshToken = "ya29.a0ARW5m74N_cXQGdU65o3AcRYbrvN1jyRQYP76hFR8bj9eICH3v3HigBDfhOc58IEe-SBH_mJiF-T5EHgnX4z3gmIt23pKl_PZ8aZ4LT9oZMMLREhae9lIDTry7U4BO7-auQthyBvcUWdiVj7zRt_2MM9CD2_wYKnPu19XyDAoaCgYKAfQSARMSFQHGX2MiWkkg9eIswApuEUoj8EG7jw0175",
-    };
+    var googleDriveApiSettings = sp.GetRequiredService<IOptions<GoogleDriveApiSettings>>().Value;
+    var tokenStore = sp.GetRequiredService<TokenStore>();
+    tokenStore.SetRefreshToken(googleDriveApiSettings.RefreshToken);
 
-
-    var applicationName = "StorageHub"; // Use the name of the project in Google Cloud
-    var username = "lifewayfiles@gmail.com"; // Use your email
-
+    var applicationName = googleDriveApiSettings.ApplicationName; // Use the name of the project in Google Cloud
+    var username = googleDriveApiSettings.Username; // Use your email
 
     var apiCodeFlow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
     {
         ClientSecrets = new ClientSecrets
         {
-            ClientId = "446582447081-kvn54ekfd6hlfntbr9a8ebig6nvglh0e.apps.googleusercontent.com",
-            ClientSecret = "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"
+            ClientId = googleDriveApiSettings.ClientId,
+            ClientSecret = googleDriveApiSettings.ClientSecret
         },
         Scopes = new[] { Scope.Drive },
         DataStore = new FileDataStore(applicationName)
     });
 
-
-    var credential = new UserCredential(apiCodeFlow, username, tokenResponse);
-
+    // Use a factory pattern to retrieve tokens dynamically
+    var credential = new UserCredential(apiCodeFlow, username, new TokenResponse
+    {
+        AccessToken = tokenStore.GetAccessToken(),
+        RefreshToken = tokenStore.GetRefreshToken(),
+    });
 
     var service = new DriveService(new BaseClientService.Initializer
     {
@@ -79,10 +83,8 @@ builder.Services.AddSingleton<DriveService>(sp =>
     return service;
 });
 
-
 // Register FileStorageService
 builder.Services.AddTransient<FileStorageService>();
-
 
 var app = builder.Build();
 

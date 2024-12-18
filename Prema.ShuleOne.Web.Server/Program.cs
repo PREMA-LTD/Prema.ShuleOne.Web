@@ -45,22 +45,6 @@ builder.Services.AddDbContext<ShuleOneDatabaseContext>(
         .EnableDetailedErrors()
 );
 
-//builder.AddNpgsqlDataSource("shuleone-db");
-//builder.AddNpgsqlDbContext<ShuleOneDatabaseContext>("postgresqldb");
-//builder.AddSqlServerDbContext<ShuleOneDatabaseContext>("sqlserverDb");
-//builder.AddMySqlDbContext<ShuleOneDatabaseContext>("mysql");
-//builder.AddMySqlDbContext<ShuleOneDatabaseContext>("mysqldb");
-
-//builder.Services.AddDbContext<ShuleOneDatabaseContext>(
-//    dbContextOptions => dbContextOptions
-//        .UseMySql(connectionString, serverVersion,
-//            options => options.EnableRetryOnFailure()) // Enable transient error resiliency
-//        .LogTo(Console.WriteLine, LogLevel.Information)
-//        .EnableSensitiveDataLogging()
-//        .EnableDetailedErrors()
-//);
-
-
 builder.Services.AddSingleton<IBulkSms, MobileSasa>();
 builder.Services.Configure<MobileSasaSettings>(builder.Configuration.GetSection("MobileSasa"));
 builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection("TelegramBot"));
@@ -75,7 +59,6 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddSingleton<ILocationCacheService, LocationCacheService>();
 builder.Services.AddHostedService<LocationCacheWorker>();
 
-
 // Ensure IConfiguration is available
 var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
 
@@ -83,13 +66,6 @@ builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
-        // Use configuration values for RabbitMQ connection
-        //cfg.Host(rabbitMqConfig["Host"], Convert.ToUInt16(rabbitMqConfig["Port"]), rabbitMqConfig["VirtualHost"], h =>
-        //{
-        //    h.Username(rabbitMqConfig["Username"]);
-        //    h.Password(rabbitMqConfig["Password"]);
-        //});
-
         cfg.Host(builder.Configuration.GetConnectionString("rabbitmq"));
     });
 });
