@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Prema.ShuleOne.Web.Server.Database;
 using Prema.ShuleOne.Web.Server.Models;
 using Prema.ShuleOne.Web.Server.BulkSms;
+using Prema.ShuleOne.Web.Server.Services;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 
 public static class StudentEndpoints
@@ -28,6 +29,18 @@ public static class StudentEndpoints
                     : TypedResults.NotFound();
         })
         .WithName("GetStudentById")
+        .WithOpenApi();
+
+        group.MapGet("/Contact/{id}", async Task<Results<Ok<StudentContact>, NotFound>> (int id, ShuleOneDatabaseContext db) =>
+        {
+            var model = await db.StudentContact
+                .FirstOrDefaultAsync(sc => sc.fk_student_id == id && sc.contact_priority == 1);
+
+            return model != null
+                ? TypedResults.Ok(model)
+                : TypedResults.NotFound();
+        })
+        .WithName("GetStudentContactById")
         .WithOpenApi();
 
         group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, Student student, ShuleOneDatabaseContext db) =>
@@ -66,7 +79,7 @@ public static class StudentEndpoints
         .WithName("CreateStudent")
         .WithOpenApi();
 
-        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa) =>
+        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa, FileGeneratorService fileGeneratorService) =>
         {
             DateTime currentDateTime = DateTime.UtcNow;
             Student student = new Student()
@@ -136,6 +149,21 @@ public static class StudentEndpoints
             }
 
             await db.SaveChangesAsync();
+
+            //generate file
+            await fileGeneratorService.GenerateFile(new Reports.AdmissionLetterDetails()
+            {
+                ParentName = primaryContact.other_names + " " + primaryContact.surname,
+                StudentOtherNames = student.other_names,
+                StudentFirstName = student.surname,
+                Grade = student.current_grade.ToString(),
+                AdmissionNumber = student.id.ToString(),
+                SchoolContactNumber = "0712290257",
+                EmailAddress = "info@lifway.co.ke",
+                HeadteacherName = "Mr. Bett",
+                HeadteacherContact = "0712290257",
+                HeadteacherSign = "https://files.prema.co.ke/enock_signature.jpg"
+            });
 
             //send message to parent/guardian
             //string parentName = $"{primaryContact.other_names} {primaryContact.surname}";

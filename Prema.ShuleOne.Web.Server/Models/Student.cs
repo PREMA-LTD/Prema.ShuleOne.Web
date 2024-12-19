@@ -15,8 +15,6 @@ namespace Prema.ShuleOne.Web.Server.Models
         public string medical_needs {  get; set; }
         public DateOnly date_of_birth { get; set; }
         public AdmissionStatus admission_status { get; set; }
-
-
         public ICollection<Document> Documents { get; set; }
     }
 

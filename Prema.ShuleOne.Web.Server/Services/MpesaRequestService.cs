@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Prema.ShuleOne.Web.Server.Models;
 
 namespace Prema.ShuleOne.Web.Server.Services;
 
@@ -75,6 +76,63 @@ public class MpesaRequestService
         }
     }
 
+
+    public async Task<string> QueryTransactionStatusAsync(string securityCredential, string transactionID, string occasion)
+    {
+        string queueTimeoutUrl = "";
+        string remarks = "";
+        string identifierType = "4";
+        string resultUrl = "";
+        string partyA = "600992";
+        string initiator = "premaadmin";
+        string accessToken = await GetAccessTokenAsync();
+        var requestUrl = "https://sandbox.safaricom.co.ke/mpesa/transactionstatus/v1/query";
+
+
+       
+
+        // Prepare the payload
+        var payload = new
+        {
+            Initiator = initiator,
+            SecurityCredential = securityCredential,
+            CommandID = "TransactionStatusQuery",
+            TransactionID = transactionID,
+            PartyA = partyA,
+            IdentifierType = identifierType,
+            ResultURL = resultUrl,
+            QueueTimeOutURL = queueTimeoutUrl,
+            Remarks = remarks,
+            Occasion = occasion
+        };
+
+        var jsonPayload = JsonConvert.SerializeObject(payload);
+
+        // Prepare the request
+        var request = new HttpRequestMessage(HttpMethod.Post, requestUrl)
+        {
+            Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json")
+        };
+
+        // Add headers
+        request.Headers.Add("Authorization", $"Bearer {accessToken}");
+
+        try
+        {
+            // Send the request
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            // Read and return the response content
+            return await response.Content.ReadAsStringAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions (log or rethrow as needed)
+            throw new Exception("Error querying transaction status", ex);
+        }
+    }
+
     private static async Task<string> GetAccessTokenAsync()
     {
         var client = new HttpClient();
@@ -121,7 +179,7 @@ public class MpesaRequestService
         return Base64UrlEncoder.Encode($"{key}:{secret}");
     }
 
-    public IActionResult ProcessCallback([FromBody] MpesaCallback callback)
+    public IActionResult ProcessExpressCallback([FromBody] MpesaExpressCallback callback)
     {
         // Validate input
         if (callback?.Body?.stkCallback == null)
@@ -143,7 +201,21 @@ public class MpesaRequestService
         }
     }
 
-    private IActionResult ProcessSuccessfulTransaction(MpesaCallback callback)
+    public IActionResult ProcessCallback([FromBody] MpesaC2BResult mpesaC2BResult)
+    {
+        // Validate input
+        if (mpesaC2BResult == null)
+        {
+            return new BadRequestResult();
+        }
+        // Log the result
+        Console.WriteLine($"C2B Result: " +
+            $"TransAmount: {mpesaC2BResult.TransAmount}, " +
+            $"Transaction ID: {mpesaC2BResult.TransID}");
+
+        return new OkResult();
+    }
+    private IActionResult ProcessSuccessfulTransaction(MpesaExpressCallback callback)
     {
         var stkCallback = callback.Body.stkCallback;
 
@@ -170,7 +242,7 @@ public class MpesaRequestService
         return new OkResult();
     }
 
-    private IActionResult ProcessCancelledTransaction(MpesaCallback callback)
+    private IActionResult ProcessCancelledTransaction(MpesaExpressCallback callback)
     {
         var stkCallback = callback.Body.stkCallback;
 
@@ -182,7 +254,7 @@ public class MpesaRequestService
         return new OkResult();
     }
 
-    private IActionResult ProcessFailedTransaction(MpesaCallback callback)
+    private IActionResult ProcessFailedTransaction(MpesaExpressCallback callback)
     {
         var stkCallback = callback.Body.stkCallback;
 
@@ -194,7 +266,7 @@ public class MpesaRequestService
         return new OkResult();
     }
 
-    public class MpesaCallback
+    public class MpesaExpressCallback
     {
         public Body Body { get; set; }
     }
@@ -223,4 +295,38 @@ public class MpesaRequestService
         public string Name { get; set; }
         public dynamic Value { get; set; }
     }
+
+    public class ResultParameter
+    {
+        public string Key { get; set; }
+        public string Value { get; set; }
+    }
+
+    public class ReferenceItem
+    {
+        public string Key { get; set; }
+    }
+
+    public class ReferenceData
+    {
+        public ReferenceItem ReferenceItem { get; set; }
+    }
+
+    public class Result
+    {
+        public string ConversationID { get; set; }
+        public string OriginatorConversationID { get; set; }
+        public ReferenceData ReferenceData { get; set; }
+        public int ResultCode { get; set; }
+        public string ResultDesc { get; set; }
+        public List<ResultParameter> ResultParameters { get; set; }
+        public int ResultType { get; set; }
+        public string TransactionID { get; set; }
+    }
+
+    public class ApiResponse
+    {
+        public Result Result { get; set; }
+    }
+
 }

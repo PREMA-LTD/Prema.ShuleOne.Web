@@ -24,13 +24,41 @@ public static class FinanceEndpint
         })
         .WithName("InitiateMpesaPaymentPrompt")
         .WithOpenApi();
-
-        group.MapPost("/mpesa/callback", ( [FromBody] MpesaCallback callback, MpesaRequestService mpesaRequestService) =>
+        
+        group.MapPost("/mpesa/express-callback", ( [FromBody] MpesaExpressCallback callback, MpesaRequestService mpesaRequestService) =>
         {
-            return mpesaRequestService.ProcessCallback(callback);
+            return mpesaRequestService.ProcessExpressCallback(callback);
         })
         .Produces(200)
         .Produces(400);
+
+        group.MapPost("/mpesa/callback", ([FromBody] MpesaC2BResult mpesaC2BResult, MpesaRequestService mpesaRequestService) =>
+        {
+            return mpesaRequestService.ProcessCallback(mpesaC2BResult);
+        })
+        .Produces(200)
+        .Produces(400);
+
+        group.MapPost("/query-status", async (HttpContext httpContext) =>
+        {
+            var requestBody = await httpContext.Request.ReadFromJsonAsync<ApiResponse>();
+
+            if (requestBody?.Result != null)
+            {
+                var status = requestBody.Result.ResultParameters
+                    ?.FirstOrDefault(param => param.Key == "TransactionStatus")?.Value;
+
+                return Results.Ok(new
+                {
+                    Message = "Transaction status retrieved successfully.",
+                    Status = status ?? "Status not found."
+                });
+            }
+
+            return Results.BadRequest(new { Message = "Invalid request body." });
+        });
+
+
 
     }
 

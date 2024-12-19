@@ -15,15 +15,18 @@ export class FinanceMpesaStkPushComponent implements OnInit {
 
   paymentData?: any;
   mpesaPaymentForm!: FormGroup;
+  recordPaymentForm!: FormGroup;
 
   constructor(
     private _snackBar: MatSnackBar,
     private fb: FormBuilder,
     public dialogRef: MatDialogRef<FinanceMpesaStkPushComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {
     this.paymentData = data.paymentData;
+    
+    console.log("FinanceMpesaStkPushComponent paymentdetails"+JSON.stringify(this.paymentData));
     this.mpesaPaymentForm = this.fb.group({
-      feeType: ['', Validators.required],
-      amount: [, Validators.required],
+      feeType: [this.paymentData.feeType, Validators.required],
+      amount: [this.paymentData.amount, Validators.required],
       mpesaNumber: [
         this.paymentData.mpesaNumber,
         [
@@ -32,7 +35,12 @@ export class FinanceMpesaStkPushComponent implements OnInit {
         ]
       ],
     });
-    
+
+
+    this.recordPaymentForm = this.fb.group({
+      accountNumber: ['', Validators.required]
+    });
+
     this.mpesaPaymentForm.get('feeType')?.disable();    
     this.mpesaPaymentForm.get('amount')?.disable();
    }
@@ -42,7 +50,7 @@ export class FinanceMpesaStkPushComponent implements OnInit {
 
   }
 
-  async submitForm() {
+  async initiateMpesaPrompt() {
     try {
       
         const paymentDetails = this.mpesaPaymentForm.value;
@@ -54,7 +62,7 @@ export class FinanceMpesaStkPushComponent implements OnInit {
         paymentDetails.feeType = this.paymentData.feeType;
         paymentDetails.amount = this.paymentData.amount;
 
-        console.log(JSON.stringify(paymentDetails))
+        console.log("submitForm mpesa-stk-push "+JSON.stringify(paymentDetails))
 
         const response = await this.financeService.initiateMpesaPayment(paymentDetails)
       
@@ -88,4 +96,6 @@ export class FinanceMpesaStkPushComponent implements OnInit {
           });
       };
   }
+
+  recordPayment() {}
 }

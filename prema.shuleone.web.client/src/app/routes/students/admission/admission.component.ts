@@ -7,6 +7,7 @@ import { StudentService } from 'app/service/student.service';
 import { finalize } from 'rxjs';
 import { Student } from 'app/models/student.model';
 import { KeycloakService } from 'keycloak-angular';
+import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/mpesa-stk-push.component';
 
 @Component({
   selector: 'app-students-admission',
@@ -41,27 +42,31 @@ export class StudentsAdmissionComponent implements OnInit {
       }
   },
   
-  
-    // {
-    //   header: 'Grade',
-    //   field: 'grade',
-    //   type: 'tag',
-    //   tag: {
-    //     1: { text: 'Paid', color: 'green-50' },
-    //     2: { text: 'Pending', color: 'orange-50' },
-    //     3: { text: 'Overdue', color: 'red-10' },
-    //   },        
-    // },
+    {
+      header: 'Payment Status',
+      field: 'admission_status',
+      type: 'tag',
+      tag: {
+        1: { text: 'Unpaid', color: 'orange-50' },
+        2: { text: 'Paid', color: 'green-50' }
+      },        
+    },
     {
       header: 'Action',
       field: 'action',
       type: 'button',
       buttons: [
         {
+          text: 'Pay Admission Fee',
+          icon: "payment",
+          iif: (record: any) => record.admission_status === 1, // Unpaid status
+          click: (studentRecord: Student) => this.initiateMpesaPayment(studentRecord)
+        },
+        {
           text: 'Admission Letter',
           color: 'primary',
           icon: "download",
-          iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
+          iif: (record: any) => record.admission_status !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
           click: (studentRecord: Student) => this.getAdmissionLetter(studentRecord)
         }
       ]
@@ -116,7 +121,7 @@ export class StudentsAdmissionComponent implements OnInit {
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);    
 
     (await this.studentService
-      .getStudents())
+      .getAllStudents())
       .pipe(
         finalize(() => {
           this.isLoading = false;
@@ -149,6 +154,39 @@ export class StudentsAdmissionComponent implements OnInit {
   }
 
   async getAdmissionLetter(studentRecord: Student) {
+
+  }
+
+  async initiateMpesaPayment(studentRecord: Student){
+    
+    
+    (await this.studentService.getStudentContact(studentRecord.id)).toPromise()
+    .then(studentContact => {
+      
+    console.log("initiateMpesaPayment student"+JSON.stringify(studentContact));
+      let paymentData = {
+          mpesaNumber : studentContact?.phone_number,
+          feeType: "Admission Fee",
+          amount: 500
+        }
+        
+        console.log("initiateMpesaPayment paymentDetails"+JSON.stringify(paymentData))
+    
+        const dialogRef = this.dialog.open(FinanceMpesaStkPushComponent, {
+          width: '400px',
+          data: { paymentData }
+        });
+    
+        dialogRef.afterClosed().subscribe(result => {
+          if (result.success === true) {
+          }
+        });
+    })
+    .catch(error => {
+      console.error("Error fetching student data:", error);
+    });
+  
+    
 
   }
 
