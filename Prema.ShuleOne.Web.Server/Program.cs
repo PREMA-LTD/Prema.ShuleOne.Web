@@ -22,7 +22,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder
-            .WithOrigins("https://localhost:4200", "https://fintrack.shangilia.africa", "http://localhost:5185") // Update this with your Angular app's URL
+            .WithOrigins("https://localhost:4200", "https://fintrack.shangilia.africa", "http://localhost:3080") // Update this with your Angular app's URL
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -60,15 +60,18 @@ builder.Services.AddSingleton<ILocationCacheService, LocationCacheService>();
 builder.Services.AddHostedService<LocationCacheWorker>();
 
 // Ensure IConfiguration is available
-var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
-
 builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("rabbitmq"));
+        cfg.Host("rabbitmq", h => // Use the container name as the host inside the Docker network
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
     });
 });
+
 
 var app = builder.Build();
 

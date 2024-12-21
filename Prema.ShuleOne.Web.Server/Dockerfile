@@ -1,12 +1,12 @@
 # Base image for running the app
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER app
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
 # Build stage for .NET and Angular
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
@@ -46,7 +46,8 @@ RUN npm run build --prod
 # Build .NET project
 FROM build AS dotnet_build
 WORKDIR /src
-COPY . .
+COPY Prema.ShuleOne.Web.ServiceDefaults/. Prema.ShuleOne.Web.ServiceDefaults/
+COPY Prema.ShuleOne.Web.Server/. Prema.ShuleOne.Web.Server/
 WORKDIR /src/Prema.ShuleOne.Web.Server
 RUN dotnet build -c $BUILD_CONFIGURATION -o /app/build
 

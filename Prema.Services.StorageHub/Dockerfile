@@ -7,14 +7,20 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+
 COPY ["Prema.Services.StorageHub/Prema.Services.StorageHub.csproj", "Prema.Services.StorageHub/"]
+COPY ["Prema.ShuleOne.Web.ServiceDefaults/Prema.ShuleOne.Web.ServiceDefaults.csproj", "Prema.ShuleOne.Web.ServiceDefaults/"]
+
+
 RUN dotnet restore "./Prema.Services.StorageHub/Prema.Services.StorageHub.csproj"
-COPY . .
+
+COPY Prema.Services.StorageHub/. Prema.Services.StorageHub/
+COPY Prema.ShuleOne.Web.ServiceDefaults/. Prema.ShuleOne.Web.ServiceDefaults/
+
 WORKDIR "/src/Prema.Services.StorageHub"
 RUN dotnet build "./Prema.Services.StorageHub.csproj" -c $BUILD_CONFIGURATION -o /app/build
 

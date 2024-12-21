@@ -26,11 +26,29 @@ builder.Services.Configure<GoogleDriveApiSettings>(builder.Configuration.GetSect
 
 builder.Services.AddSingleton<FileStorageService>();
 
+//builder.Services.AddMassTransit(x =>
+//{
+//    x.UsingRabbitMq((context, cfg) =>
+//    {
+//        cfg.Host(builder.Configuration.GetConnectionString("rabbitmq"));
+
+//        cfg.ReceiveEndpoint("file-created", e =>
+//        {
+//            e.Consumer<FileUploaderConsumer>(context);
+//        });
+//    });
+//});
+
+// Ensure IConfiguration is available
 builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("rabbitmq"));
+        cfg.Host("rabbitmq", h => // Use the container name as the host inside the Docker network
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
 
         cfg.ReceiveEndpoint("file-created", e =>
         {

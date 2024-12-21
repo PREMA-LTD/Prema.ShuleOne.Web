@@ -1,0 +1,104 @@
+version: '3.8'
+
+networks:
+  prema_network:
+    driver: bridge
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - prema_network
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight
+    ports:
+      - "8501:8001"
+    depends_on:
+      - redis
+    networks:
+      - prema_network
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "8672:5672"
+      - "18672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - prema_network
+
+  web-server:
+    build:
+      context: ./
+      dockerfile: Prema.ShuleOne.Web.Server/Dockerfile
+    container_name: web-server
+    ports:
+      - "5582:8080"
+      - "5502:7136"
+    depends_on:
+      - rabbitmq
+      - dbmanager
+    networks:
+      - prema_network
+    volumes:
+      - ./Prema.ShuleOne.Web.Server/appsettings.json:/app/appsettings.json
+
+  dbmanager:
+    build:
+      context: ./
+      dockerfile: Prema.Services.ShuleOneDbManager/Dockerfile
+    container_name: dbmanager
+    ports:
+      - "5501:5001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - rabbitmq
+    networks:
+      - prema_network
+    volumes:
+      - ./Prema.Services.ShuleOneDbManager/appsettings.json:/app/appsettings.json
+
+  storagehub:
+    build:
+      context: ./
+      dockerfile: Prema.Services.StorageHub/Dockerfile
+    container_name: storagehub
+    ports:
+      - "5503:5003"
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - prema_network
+    volumes:
+      - ./Prema.Services.StorageHub/appsettings.json:/app/appsettings.json
+      
+  client:
+    build:
+      context: ./
+      dockerfile: prema.shuleone.web.client/Dockerfile
+    container_name: client
+    ports:
+      - "3080:80"
