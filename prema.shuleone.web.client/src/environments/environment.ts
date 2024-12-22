@@ -5,7 +5,7 @@
 export const environment = {
   production: false,
   apiUrl: 'https://localhost:7295/api',
-  baseUrl: '',
+  baseUrl: 'http://localhost:4200',
   useHash: false,
   keycloakUrl: 'https://keycloak-dev.prema.co.ke',
   realm: 'shule-one',

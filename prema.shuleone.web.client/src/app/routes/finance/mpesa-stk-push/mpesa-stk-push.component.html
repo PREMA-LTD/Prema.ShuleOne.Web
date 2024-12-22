@@ -63,10 +63,10 @@
                     <div class="p-4">
                         <form [formGroup]="recordPaymentForm" class="flex flex-col gap-4">
                             <mat-form-field appearance="outline" class="w-full">
-                                <mat-label>Bank Account Number</mat-label>
+                                <mat-label>Mpesa Refrence</mat-label>
                                 <input matInput formControlName="accountNumber" placeholder="Enter account number">
                                 <mat-error *ngIf="recordPaymentForm.get('accountNumber')?.errors?.['required']">
-                                    Bank account number is required
+                                    Enter mpesa transaction refrence
                                 </mat-error>
                             </mat-form-field>
 

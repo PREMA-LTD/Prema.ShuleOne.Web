@@ -15,11 +15,14 @@ export class TokenInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<unknown>, next: HttpHandler) {
     const handler = () => {
+      console.log("token-interceptor.ts -> intercept() -> handler()");
       if (req.url.includes('/auth/logout')) {
+        console.log("token-interceptor.ts -> intercept() -> handler() -> /auth/logout");
         this.router.navigateByUrl('/auth/login');
       }
 
       if (this.router.url.includes('/auth/login')) {
+        console.log("token-interceptor.ts -> intercept() -> handler() -> /auth/login/tokeninterceptor22");
         this.router.navigateByUrl('/dashboard');
       }
     };

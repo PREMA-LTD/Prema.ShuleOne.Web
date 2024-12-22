@@ -106,7 +106,7 @@ describe('TokenInterceptor', () => {
     navigateByUrl.and.returnValue(Promise.resolve(true));
 
     mockRequest('/auth/logout');
-
+console.log("token-interceptor.spec.ts -> it('should navigate /auth/login when api url is /auth/logout and token is valid')");
     expect(navigateByUrl).toHaveBeenCalledWith('/auth/login');
   });
 
@@ -116,7 +116,7 @@ describe('TokenInterceptor', () => {
     navigateByUrl.and.returnValue(Promise.resolve(true));
 
     mockRequest('/auth/logout');
-
+console.log("token-interceptor.spec.ts -> it('should navigate /auth/login when api url is /auth/logout and token is invalid')");
     expect(navigateByUrl).toHaveBeenCalledWith('/auth/login');
   });
 });

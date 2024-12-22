@@ -39,12 +39,12 @@ export class AuthService {
   }
 
   check() {
-    console.log("auth.service.ts -> check()");
+    console.log("auth.service.ts -> check() time: " + new Date().getTime());
     return this.tokenService.valid();
   }
 
   login(username: string, password: string, rememberMe = false) {
-    console.log("auth.service.ts -> login()");
+    console.log("auth.service.ts -> login() time: " + new Date().getTime());
     return this.loginService.login(username, password, rememberMe).pipe(
       tap(token => this.tokenService.set(token)),
       map(() => this.check())
@@ -52,6 +52,7 @@ export class AuthService {
   }
 
   refresh() {
+    console.log("auth.service.ts -> refresh()");
     return this.loginService
       .refresh(filterObject({ refresh_token: this.tokenService.getRefreshToken() }))
       .pipe(
@@ -62,6 +63,7 @@ export class AuthService {
   }
 
   logout() {
+    console.log("auth.service.ts -> logout() Time: " + new Date().getTime());
     return this.loginService.logout().pipe(
       tap(() => this.tokenService.clear()),
       map(() => !this.check())
@@ -73,7 +75,7 @@ export class AuthService {
   }
 
   menu() {
-    console.log("auth.service.ts -> menu()");
+    console.log("auth.service.ts -> menu() TIME: " + new Date().getTime());
     return iif(() => true, this.loginService.menu(), of([]));
   }
 
