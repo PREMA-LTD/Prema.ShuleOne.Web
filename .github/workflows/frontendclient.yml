@@ -1,0 +1,46 @@
+name: Frontend - Build and Push Docker Image to Docker Hub
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'prema.shuleone.web.client/**'
+  workflow_dispatch:
+
+jobs:
+  push_to_registry:
+    name: push docker image to hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: check repository
+        uses: actions/checkout@v4
+
+      - name: set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '19'  # Use the appropriate Node.js version for your Angular project
+
+      - name: install dependencies
+        run: |
+          cd prema.shuleone.web.client
+          npm install
+
+      - name: build angular project
+        run: |
+          cd Prema.ChamaOne.Frontend
+          npm run build --prod
+
+      - name: login to docker registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: build and push docker image to registry
+        uses: docker/build-push-action@v5
+        with:
+          context: './'  # Project root
+          file: './prema.shuleone.web.client/Dockerfile'
+          push: true
+          tags: kimzdocker/prema.shuleone.frontendclient:latest
