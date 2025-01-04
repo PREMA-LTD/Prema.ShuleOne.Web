@@ -23,25 +23,8 @@ COPY Prema.ShuleOne.Web.ServiceDefaults/Prema.ShuleOne.Web.ServiceDefaults.cspro
 RUN mkdir -p /app/Database/LocationData
 COPY Prema.ShuleOne.Web.Server/Database/LocationData/kenya-location-data.csv /app/Database/LocationData/
 
-
 # Restore .NET dependencies
 RUN dotnet restore Prema.ShuleOne.Web.Server/Prema.ShuleOne.Web.Server.csproj
-
-# Build Angular project (Node.js Stage)
-FROM node:18 AS angular_build
-WORKDIR /src/prema.shuleone.web.client
-
-# Copy Angular project files
-COPY prema.shuleone.web.client/package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the Angular source files
-COPY prema.shuleone.web.client/ .
-
-# Build the Angular project
-RUN npm run build --prod
 
 # Build .NET project
 FROM build AS dotnet_build
@@ -61,12 +44,6 @@ WORKDIR /app
 
 # Copy published .NET files
 COPY --from=publish /app/publish .
-
-
-
-# Copy Angular build output to .NET's wwwroot
-COPY --from=angular_build /src/prema.shuleone.web.client/dist/prema.shuleone.web.client wwwroot/
-
 
 # Set the entry point
 ENTRYPOINT ["dotnet", "Prema.ShuleOne.Web.Server.dll"]
