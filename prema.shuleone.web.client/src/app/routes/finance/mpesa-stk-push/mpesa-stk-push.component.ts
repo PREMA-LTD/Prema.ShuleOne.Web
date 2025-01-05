@@ -42,7 +42,7 @@ export class FinanceMpesaStkPushComponent implements OnInit {
 
 
     this.recordPaymentForm = this.fb.group({
-      accountNumber: ['', Validators.required]
+      transactionRef: ['', Validators.required]
     });
 
     this.mpesaPaymentForm.get('feeType')?.disable();    

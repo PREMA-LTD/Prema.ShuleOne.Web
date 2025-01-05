@@ -24,7 +24,7 @@ public class MpesaRequestService
     public async Task SendMpesaRequestAsync(long mpesaNumber, int amount)
     {
         // Define the request URL (replace with the actual endpoint)
-        string url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
+        string url = "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
 
 
         string token = await GetAccessTokenAsync();
@@ -39,11 +39,11 @@ public class MpesaRequestService
             TransactionType = "CustomerPayBillOnline",
             Amount = amount,
             PartyA = mpesaNumber,
-            PartyB = 174379,
+            PartyB = 4148215,
             PhoneNumber = mpesaNumber,
-            CallBackURL = "https://6ffd-41-90-172-36.ngrok-free.app/api/Finance/mpesa/callback",
-            AccountReference = "CHEPKOR",
-            TransactionDesc = "Payment of X"
+            CallBackURL = "https://www.prema.co.ke/api/Transactions/Confirmation",
+            AccountReference = "Admission Fee",
+            TransactionDesc = "Payment of Admission Fee"
         };
 
         // Serialize the request body to JSON
@@ -145,7 +145,8 @@ public class MpesaRequestService
         //string authToken = GenerateAuthToken("6Rg70lB6mQutR9FdOAYJJc1jg9hAjqcR", "9NfZGGqEkUOG6pYN");
         //request.Headers.Add("Authorization", $"{authToken}");
 
-        request.Headers.Add("Authorization", "Basic NlJnNzBsQjZtUXV0UjlGZE9BWUpKYzFqZzloQWpxY1I6OU5mWkdHcUVrVU9HNnBZTg==");
+        //request.Headers.Add("Authorization", "Basic NlJnNzBsQjZtUXV0UjlGZE9BWUpKYzFqZzloQWpxY1I6OU5mWkdHcUVrVU9HNnBZTg==");
+        request.Headers.Add("Authorization", $"Basic {Base64UrlEncoder.Encode("ACAlSZnp822Epfecmmwyca6t9yFQG96UQV6k8Me2wiHqOn7C:eHfkokl2UiUMjW1XezfmB87WAjen23ASEL7DmZ1EZo25GAtGnZLqNp5DNs4j5Ofw")}");
 
 
 
@@ -170,8 +171,9 @@ public class MpesaRequestService
 
     private string GeneratePassword(string token)
     {
-        string passkey = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919";
-        return Base64UrlEncoder.Encode($"174379{passkey}{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}");
+        //string passkey = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919";
+        string passkey = "95990e167ff6d333a4d5f2392a72f8b7700b48b890d78c5ac97b70cef4ee0e43";
+        return Base64UrlEncoder.Encode($"4148215{passkey}{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}");
     }
 
     private static string GenerateAuthToken(string key, string secret)
