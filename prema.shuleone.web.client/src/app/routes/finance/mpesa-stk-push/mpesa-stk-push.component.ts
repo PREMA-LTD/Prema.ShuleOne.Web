@@ -2,6 +2,7 @@ import { Component, inject, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { TransactionStatus } from 'app/models/transansaction.model';
 import { FinanceService } from 'app/service/finance.service';
 
 @Component({
@@ -15,7 +16,10 @@ export class FinanceMpesaStkPushComponent implements OnInit {
 
   paymentData?: any;
   mpesaPaymentForm!: FormGroup;
-  recordPaymentForm!: FormGroup;
+  recordPaymentForm!: FormGroup;  
+  paymentReceived: boolean = false; // Tracks if the payment is received
+  paymentChecked: boolean = false; // Tracks if the payment check has been performed
+
 
   constructor(
     private _snackBar: MatSnackBar,
@@ -97,5 +101,45 @@ export class FinanceMpesaStkPushComponent implements OnInit {
       };
   }
 
-  recordPayment() {}
+  async recordPayment() {
+    try {      
+
+      const recordPaymentFormData = this.recordPaymentForm.value;
+
+      const transactionRef = recordPaymentFormData.transactionRef;
+
+      const response = await this.financeService.checkPayment(transactionRef)
+      this.paymentChecked = true; // Indicates payment check is performed
+ 
+      if(response.TransactionStatus == TransactionStatus.Success){
+        this.paymentReceived = true;
+      this._snackBar.open('Mpesa payment received successfully.', 'Ok', {
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+        duration: 5 * 1000,
+        });
+
+        
+      } else {
+        this.paymentReceived = false;
+        this._snackBar.open('Mpesa payment not recieved.', 'Ok', {
+          panelClass: ['error-snackbar'],  // Add a custom CSS class
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          duration: 5 * 1000,
+          });
+      }
+
+    
+    } catch(error) {
+      console.error('Error sending message:', error);
+      
+      this._snackBar.open('Error checking payment, please try again.', 'Ok', {
+        panelClass: ['error-snackbar'],  // Add a custom CSS class
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+        duration: 5 * 1000,
+        });
+    };
+  }
 }

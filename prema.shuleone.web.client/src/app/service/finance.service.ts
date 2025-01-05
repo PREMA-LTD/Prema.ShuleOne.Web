@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { KeycloakService } from 'keycloak-angular';
 import { KeycloakProfile } from 'keycloak-js';
 import { Student } from 'app/models/student.model';
+import { TransactionResult } from 'app/models/transansaction.model';
 
 
 @Injectable({
@@ -24,5 +25,9 @@ export class FinanceService {
   
   async initiateMpesaPayment(paymentDetails: any): Promise<any | undefined> {
     return this.http.post<any>(`${this.apiUrl}/Finance/InitiateMpesaPaymentPrompt`, paymentDetails).toPromise();
+  }
+
+  async checkPayment(transactionId: string): Promise<TransactionResult | undefined> {
+    return this.http.get<TransactionResult>(`https://www.prema.co.ke/api/Transactions/TransactionStatus?transactionId=${transactionId}`).toPromise();
   }
 }

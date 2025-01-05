@@ -58,14 +58,14 @@
                 </mat-tab>
 
                 <!-- Tab 2: Bank Payment -->
-                <mat-tab label="Record Payment">
+                <mat-tab label="Check Payment">
                     <br/>
                     <div class="p-4">
                         <form [formGroup]="recordPaymentForm" class="flex flex-col gap-4">
                             <mat-form-field appearance="outline" class="w-full">
                                 <mat-label>Mpesa Refrence</mat-label>
-                                <input matInput formControlName="accountNumber" placeholder="Enter account number">
-                                <mat-error *ngIf="recordPaymentForm.get('accountNumber')?.errors?.['required']">
+                                <input matInput formControlName="transactionRef" placeholder="Enter mpesa transaction refrence">
+                                <mat-error *ngIf="recordPaymentForm.get('transactionRef')?.errors?.['required']">
                                     Enter mpesa transaction refrence
                                 </mat-error>
                             </mat-form-field>
@@ -73,7 +73,7 @@
                             <!-- Navigation Buttons -->
                             <div class="flex justify-end mt-4">
                                 <button mat-raised-button color="primary" (click)="recordPayment()">
-                                    Record Payment
+                                    Check Payment
                                 </button>
                             </div>
                         </form>

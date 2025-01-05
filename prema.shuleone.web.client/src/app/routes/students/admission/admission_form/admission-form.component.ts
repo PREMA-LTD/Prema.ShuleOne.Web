@@ -373,7 +373,7 @@ export class AdmissionFormComponent {
         });
         const paymentDetails: any = {
           feeType: "Admission Fee",
-          amount: 500,
+          amount: 2,
           mpesaNumber: studentAdmissionData.primary_contact.phone_number
         }
 
