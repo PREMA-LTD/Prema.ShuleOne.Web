@@ -1,6 +1,6 @@
 export interface TransactionResult {
     transactionId: string; // Maps to TransactionId in C#
-    status: TransactionStatus; // Maps to TransactionStatus in C#
+    status: number; // Maps to TransactionStatus in C#
     message: string; // Maps to Message in C#
 }
 
