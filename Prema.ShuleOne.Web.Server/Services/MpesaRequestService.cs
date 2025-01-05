@@ -36,7 +36,7 @@ public class MpesaRequestService
         // Prepare the request body
         var requestBody = new
         {
-            BusinessShortCode = 174379,
+            BusinessShortCode = 4148215,
             Password = password,
             Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"), // Generate timestamp dynamically
             TransactionType = "CustomerPayBillOnline",
