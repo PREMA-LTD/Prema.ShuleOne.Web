@@ -111,7 +111,7 @@ export class FinanceMpesaStkPushComponent implements OnInit {
       const response = await this.financeService.checkPayment(transactionRef)
       this.paymentChecked = true; // Indicates payment check is performed
  
-      if(response.status == TransactionStatus.Success){
+      if(response?.status == TransactionStatus.Success){
         this.paymentReceived = true;
       this._snackBar.open('Mpesa payment received successfully.', 'Ok', {
         horizontalPosition: 'right',
