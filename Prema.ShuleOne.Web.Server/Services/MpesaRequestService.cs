@@ -24,7 +24,7 @@ public class MpesaRequestService
     public async Task SendMpesaRequestAsync(long mpesaNumber, int amount)
     {
         // Define the request URL (replace with the actual endpoint)
-        string url = "https://api.safaricom.co.ke/mpesa/stkpush/v2/processrequest";
+        string url = "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
 
 
         string token = await GetAccessTokenAsync();

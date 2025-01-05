@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TransactionStatus } from 'app/models/transansaction.model';
 import { FinanceService } from 'app/service/finance.service';
+import { MatTabGroup } from '@angular/material/tabs';
 
 @Component({
   selector: 'app-finance-mpesaStkPush',
@@ -141,5 +142,10 @@ export class FinanceMpesaStkPushComponent implements OnInit {
         duration: 5 * 1000,
         });
     };
+  }
+
+  goToNextTab(tabGroup: MatTabGroup): void {
+    const nextIndex = tabGroup.selectedIndex !== undefined ? tabGroup.selectedIndex + 1 : 1;
+    tabGroup.selectedIndex = nextIndex;
   }
 }

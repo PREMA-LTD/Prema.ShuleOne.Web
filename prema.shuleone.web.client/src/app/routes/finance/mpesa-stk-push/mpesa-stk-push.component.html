@@ -56,7 +56,48 @@
                         </form>
                     </div>
                 </mat-tab>
-
+                    <mat-tab label="Manual Payment">
+                        <br />
+                        <div class="p-4">
+                            <h3>Manual Payment Process</h3>
+                            <ol>
+                                <li>
+                                    <strong>Go to 'Lipa na Mpesa'</strong>
+                                    <p>Navigate to the 'Lipa na Mpesa' option on your phone.</p>
+                                </li>
+                                <li>
+                                    <strong>Select 'Pay Bill'</strong>
+                                    <p>Choose the 'Pay Bill' option from the menu.</p>
+                                </li>
+                                <li>
+                                    <strong>Enter business number '4148251'</strong>
+                                    <p>Type the business number as '4148251' in the required field.</p>
+                                </li>
+                                <li>
+                                    <strong>Enter account number</strong>
+                                    <p>Provide the account number as 'admission'.</p>
+                                </li>
+                                <li>
+                                    <strong>Enter fees amount</strong>
+                                    <p>Input 200.</p>
+                                </li>
+                                <li>
+                                    <strong>Enter your Mpesa PIN</strong>
+                                    <p>Enter your secret Mpesa PIN to authorize the transaction.</p>
+                                </li>
+                                <li>
+                                    <strong>Confirm transaction</strong>
+                                    <p>Review the details and confirm the payment.</p>
+                                </li>
+                                <li>
+                                    <strong>Receive SMS confirmation</strong>
+                                    <p>You will receive an SMS confirming the payment was successful.</p>
+                                </li>
+                            </ol>
+                            <button mat-raised-button color="primary" (click)="goToNextTab(tabGroup)">Check Payment</button>
+                        </div>
+                    </mat-tab>
+                
                 <!-- Tab 2: Bank Payment -->
                 <mat-tab label="Check Payment">
                     <br/>
