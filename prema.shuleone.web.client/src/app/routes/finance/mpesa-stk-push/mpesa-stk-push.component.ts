@@ -144,8 +144,8 @@ export class FinanceMpesaStkPushComponent implements OnInit {
     };
   }
 
-  goToNextTab(tabGroup: MatTabGroup): void {
-    const nextIndex = tabGroup.selectedIndex !== undefined ? tabGroup.selectedIndex + 1 : 1;
-    tabGroup.selectedIndex = nextIndex;
-  }
+  // goToNextTab(tabGroup: MatTabGroup): void {
+  //   const nextIndex = tabGroup.selectedIndex !== undefined ? tabGroup.selectedIndex + 1 : 1;
+  //   tabGroup.selectedIndex = nextIndex;
+  // }
 }
