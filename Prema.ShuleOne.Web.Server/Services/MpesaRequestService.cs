@@ -30,6 +30,9 @@ public class MpesaRequestService
         string token = await GetAccessTokenAsync();
         string password = GeneratePassword(token);
 
+        Console.WriteLine($"token:  {token}");
+        Console.WriteLine($"Password:  {password}");
+
         // Prepare the request body
         var requestBody = new
         {
@@ -45,6 +48,9 @@ public class MpesaRequestService
             AccountReference = "Admission Fee",
             TransactionDesc = "Payment of Admission Fee"
         };
+
+
+        Console.WriteLine($"requestBody:  {System.Text.Json.JsonSerializer.Serialize(requestBody)}");
 
         // Serialize the request body to JSON
         string json = JsonConvert.SerializeObject(requestBody);
