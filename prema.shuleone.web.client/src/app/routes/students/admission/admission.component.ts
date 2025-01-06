@@ -159,7 +159,6 @@ export class StudentsAdmissionComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      this.dialog.close();
       if (result.success === true) {
       }
     });
