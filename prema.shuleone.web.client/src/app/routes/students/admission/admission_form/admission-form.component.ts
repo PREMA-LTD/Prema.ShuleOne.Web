@@ -82,12 +82,18 @@ export class AdmissionFormComponent {
   .map(([key, value]) => ({ key, value })); // Format as array of objects
 
   grades = [
-    { value: 1, name: 'Play Group' },
-    { value: 2, name: 'PP1' },
-    { value: 3, name: 'PP2' },
-    { value: 4, name: 'Grade 1' },
-    { value: 5, name: 'Grade 2' },
-    { value: 6, name: 'Grade 3' }
+    { value: 10, name: 'Play Group' },
+    { value: 11, name: 'PP1' },
+    { value: 12, name: 'PP2' },
+    { value: 1, name: 'Grade 1' },
+    { value: 2, name: 'Grade 2' },
+    { value: 3, name: 'Grade 3' },
+    { value: 4, name: 'Grade 4' },
+    { value: 5, name: 'Grade 5' },
+    { value: 6, name: 'Grade 6' },
+    { value: 6, name: 'Grade 7' },
+    { value: 8, name: 'Grade 8' },
+    { value: 9, name: 'Grade 9' }
   ];  
   
   constructor(private fb: FormBuilder, private _snackBar: MatSnackBar, public dialog: MatDialog) {
