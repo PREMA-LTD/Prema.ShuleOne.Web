@@ -36,6 +36,24 @@ export class StudentsAdmissionComponent implements OnInit {
                   return 'PP1';
               case 12:
                   return 'PP2';
+              case 1:
+                  return 'Grade 1';
+              case 2:
+                  return 'Grade 2';
+              case 3:
+                  return 'Grade 3';
+              case 4:
+                  return 'Grade 4';
+              case 5:
+                  return 'Grade 5';
+              case 6:
+                  return 'Grade 6';
+              case 7:
+                  return 'Grade 7';
+              case 8:
+                  return 'Grade 8';
+              case 9:
+                  return 'Grade 9';
               default:
                   return data.current_grade;
           }
@@ -141,7 +159,7 @@ export class StudentsAdmissionComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      this.dialogRef.close();
+      this.dialog.close();
       if (result.success === true) {
       }
     });
