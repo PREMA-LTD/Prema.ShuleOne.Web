@@ -35,6 +35,7 @@ namespace Prema.ShuleOne.Web.Server.Models
     {
         Pending = 1,
         Admitted = 2,
-        Transfered = 3
+        Transfered = 3,
+        Inactive = 4
     }
 }
