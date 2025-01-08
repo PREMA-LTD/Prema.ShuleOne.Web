@@ -15,7 +15,10 @@ public static class StudentEndpoints
 
         group.MapGet("/", async (ShuleOneDatabaseContext db) =>
         {
-            return await db.Student.Where(s => s.admission_status != AdmissionStatus.Inactive).ToListAsync();
+            return await db.Student
+                .Where(s => s.admission_status != AdmissionStatus.Inactive)
+                .OrderByDescending(s => s.date_of_admission)
+                .ToListAsync();
         })
         .WithName("GetAllStudents")
         .WithOpenApi();
