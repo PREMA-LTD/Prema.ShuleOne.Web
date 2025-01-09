@@ -27,7 +27,7 @@ public static class StudentEndpoints
         group.MapGet("/Admissions", async (ShuleOneDatabaseContext db) =>
         {
             return await db.Student
-                .Where(s => s.admission_status != AdmissionStatus.Inactive && s.date_of_admission > DateTime.UtcNow.AddDays(-7))
+                .Where(s => s.admission_status != AdmissionStatus.Inactive && s.date_of_admission > DateTime.UtcNow.AddDays(-5))
                 .OrderByDescending(s => s.date_of_admission)
                 .ToListAsync();
         })
