@@ -26,7 +26,7 @@ export class StudentService {
   }
 
   async getRecentAdmissions(): Promise<Observable<Student[]>> {
-    return this.http.get<Student[]>(`${this.apiUrl}/Admission`);
+    return this.http.get<Student[]>(`${this.apiUrl}/Admissions`);
   }
 
   async getStudent(id: number): Promise<Observable<Student>> {
