@@ -31,6 +31,16 @@
           }
         },
         {
+          "route": "StudentRecords",
+          "name": "student-records",
+          "type": "link",
+          "icon": "person",
+          "permissions": {
+            "only": ["super-admin", "admin"],
+            "redirectTo": "/"
+          }
+        },
+        {
           "route": "academics",
           "name": "academics",
           "type": "link",

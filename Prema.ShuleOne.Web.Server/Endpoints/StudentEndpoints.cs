@@ -13,7 +13,7 @@ public static class StudentEndpoints
     {
         var group = routes.MapGroup("/api/Student").WithTags(nameof(Student));
 
-        group.MapGet("/", async (ShuleOneDatabaseContext db) =>
+        group.MapGet("/All", async (ShuleOneDatabaseContext db) =>
         {
             return await db.Student
                 .Where(s => s.admission_status != AdmissionStatus.Inactive)
@@ -21,6 +21,17 @@ public static class StudentEndpoints
                 .ToListAsync();
         })
         .WithName("GetAllStudents")
+        .WithOpenApi();
+
+
+        group.MapGet("/Admissions", async (ShuleOneDatabaseContext db) =>
+        {
+            return await db.Student
+                .Where(s => s.admission_status != AdmissionStatus.Inactive && s.date_of_admission > DateTime.UtcNow.AddDays(-7))
+                .OrderByDescending(s => s.date_of_admission)
+                .ToListAsync();
+        })
+        .WithName("GetAdmissions")
         .WithOpenApi();
 
         group.MapGet("/{id}", async Task<Results<Ok<Student>, NotFound>> (int id, ShuleOneDatabaseContext db) =>

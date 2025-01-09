@@ -15,9 +15,10 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { AdmissionFormComponent } from './admission/admission_form/admission-form.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { StudentsStudentRecordsComponent } from './student-records/student-records.component';
 
 
-const COMPONENTS: any[] = [StudentsAdmissionComponent, StudentsAcademicsComponent, AdmissionFormComponent];
+const COMPONENTS: any[] = [StudentsAdmissionComponent, StudentsAcademicsComponent, AdmissionFormComponent, StudentsStudentRecordsComponent];
 const COMPONENTS_DYNAMIC: any[] = [];
 
 @NgModule({
