@@ -81,3 +81,8 @@ export interface DateOfBirth {
       Admitted = 2,
       Transfered = 3
   }
+  
+  export interface StudentPagination {
+    total: number;
+    students: Student[];
+  }

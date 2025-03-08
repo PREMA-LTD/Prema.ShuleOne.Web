@@ -1,0 +1,29 @@
+<h2 mat-dialog-title>Contact Information</h2>
+<mat-dialog-content>
+    <div class="contact-info">
+        <p><strong>Student Admission:</strong> {{ studentAdmission }}</p>
+        <p><strong>Student Name:</strong> {{ studentName }}</p>
+        <br />
+
+        <p><strong>Primary Contact</strong></p>
+        <p><strong>Name:</strong> {{ studentContact?.[0]?.other_names || 'Not Found' }} {{
+            studentContact?.[0]?.surname || 'Not Found' }}</p>
+        <p><strong>Relationship:</strong> {{ getRelationship(studentContact?.[0]?.relationship) || 'Not Found' }}</p>
+        <p><strong>Phone:</strong> {{ studentContact?.[0]?.phone_number || 'Not Found' }} </p>
+        <br />
+
+        <div *ngIf="hasSecondaryContact">
+            <p><strong>Secondary Contact</strong></p>
+            <p><strong>Name:</strong> {{ studentContact?.[1]?.other_names || 'Not Found' }} {{
+                studentContact?.[1]?.surname || 'Not Found' }}</p>
+            <p><strong>Relationship:</strong> {{ getRelationship(studentContact?.[1]?.relationship) || 'Not Found' }}
+            </p>
+            <p><strong>Phone:</strong> {{ studentContact?.[1]?.phone_number || 'Not Found' }}</p>
+        </div>
+
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+    <button mat-button (click)="closeDialog()">Close</button>
+</mat-dialog-actions>

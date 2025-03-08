@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { KeycloakService } from 'keycloak-angular';
 import { KeycloakProfile } from 'keycloak-js';
-import { Contact, Student } from 'app/models/student.model';
+import { Contact, Student, StudentPagination } from 'app/models/student.model';
 
 
 @Injectable({
@@ -33,9 +33,16 @@ export class StudentService {
     return this.http.get<Student>(`${this.apiUrl}/${id}`);
   }
 
-  async getStudentContact(id: number): Promise<Observable<Contact>> {
-    return this.http.get<Contact>(`${this.apiUrl}/Contact/${id}`);
+  async getStudentContact(id: number): Promise<Observable<Contact[]>> {
+    return this.http.get<Contact[]>(`${this.apiUrl}/Contact/${id}`);
   }
 
+
+
+  async getStudentsPaginated(page: number, perPage: number, admissionStatus: number, grade: number = 0): Promise<Observable<StudentPagination>> {
+    // if(this.keycloakService.isUserInRole("super-admin") || this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("finance")){
+      return this.http.get<StudentPagination>(`${this.apiUrl}?pageNumber=${page}&pageSize=${perPage}&admissionStatus=${admissionStatus}&grade=${grade}`);
+    // }
+  }
 
 }

@@ -5,6 +5,8 @@ using Prema.ShuleOne.Web.Server.Database;
 using Prema.ShuleOne.Web.Server.Models;
 using Prema.ShuleOne.Web.Server.BulkSms;
 using Prema.ShuleOne.Web.Server.Services;
+using AutoMapper;
+using AutoMapper.Execution;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 
 public static class StudentEndpoints
@@ -21,6 +23,62 @@ public static class StudentEndpoints
                 .ToListAsync();
         })
         .WithName("GetAllStudents")
+        .WithOpenApi();
+
+        group.MapGet("/", async (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1, int admissionStatus = 0, int grade = 0) =>
+        {
+            var totalStudents = 0;
+
+            var query = db.Student
+                .AsNoTracking()
+                .OrderBy(c => c.id)
+                .AsQueryable();
+
+            // Apply filters dynamically based on the provided parameters
+            if (admissionStatus != 0)
+            {
+                query = query.Where(s => s.admission_status == (AdmissionStatus)admissionStatus);
+            }
+            if (grade != 0)
+            {
+                query = query.Where(s => s.current_grade == (Grades)grade);
+            }
+
+            // Count the total records for pagination
+            totalStudents = await query.CountAsync();
+
+            // Apply pagination and projection to DTO
+            var students = await query
+                .Skip(pageNumber * pageSize)
+                .Take(pageSize)
+                .Select(c => new StudentDto
+                {
+                    id = c.id,
+                    surname = c.surname,
+                    other_names = c.other_names,
+                    date_created = c.date_created,
+                    date_updated = c.date_updated,
+                    fk_created_by = c.fk_created_by,
+                    current_grade = c.current_grade,
+                    date_of_admission = c.date_of_admission,
+                    village_or_estate = c.village_or_estate,
+                    gender = c.gender,
+                    upi = c.upi,
+                    assessment_no = c.assessment_no,
+                    birth_cert_entry_no = c.birth_cert_entry_no,
+                    medical_needs = c.medical_needs,
+                    fk_residence_ward_id = c.fk_residence_ward_id
+                })
+                .ToListAsync();
+
+            // Return results including pagination metadata
+            return Results.Ok(new
+            {
+                total = totalStudents,
+                students = students
+            });
+        })
+        .WithName("GetStudentsPaginated")
         .WithOpenApi();
 
 
@@ -45,10 +103,11 @@ public static class StudentEndpoints
         .WithName("GetStudentById")
         .WithOpenApi();
 
-        group.MapGet("/Contact/{id}", async Task<Results<Ok<StudentContact>, NotFound>> (int id, ShuleOneDatabaseContext db) =>
+        group.MapGet("/Contact/{id}", async Task<Results<Ok<List<StudentContact>>, NotFound>> (int id, ShuleOneDatabaseContext db) =>
         {
             var model = await db.StudentContact
-                .FirstOrDefaultAsync(sc => sc.fk_student_id == id && sc.contact_priority == 1);
+                .Where(sc => sc.fk_student_id == id)
+                .ToListAsync();
 
             return model != null
                 ? TypedResults.Ok(model)

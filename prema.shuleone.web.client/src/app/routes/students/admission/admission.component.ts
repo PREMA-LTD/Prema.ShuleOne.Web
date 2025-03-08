@@ -183,7 +183,7 @@ export class StudentsAdmissionComponent implements OnInit {
       
     console.log("initiateMpesaPayment student"+JSON.stringify(studentContact));
       let paymentData = {
-          mpesaNumber : studentContact?.phone_number,
+          mpesaNumber : studentContact?.find(contact => contact.contact_priority === 1)?.phone_number,
           feeType: "Admission Fee",
           amount: 500
         }

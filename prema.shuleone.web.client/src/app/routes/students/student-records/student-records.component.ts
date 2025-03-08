@@ -7,6 +7,7 @@ import { finalize } from 'rxjs';
 import { Student } from 'app/models/student.model';
 import { KeycloakService } from 'keycloak-angular';
 import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/mpesa-stk-push.component';
+import { ContactInfoComponent } from './contact_info/contact-info.component';
 
 @Component({
   selector: 'app-students-StudentRecords',
@@ -60,19 +61,17 @@ export class StudentsStudentRecordsComponent implements OnInit {
   },
   
     {
-      header: 'Payment Status',
-      field: 'admission_status',
-      type: 'tag',
-      tag: {
-        1: { text: 'Unpaid', color: 'orange-50' },
-        2: { text: 'Paid', color: 'green-50' }
-      },        
-    },
-    {
       header: 'Action',
       field: 'action',
       type: 'button',
-      buttons: [      
+      buttons: [    
+        {
+          text: 'View Contact',
+          color: 'primary',
+          icon: 'phone',
+          // iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
+          click: (record: any) => this.openContactInfo(record)
+        }  
       ]
     }
   ];
@@ -90,6 +89,7 @@ export class StudentsStudentRecordsComponent implements OnInit {
     page: 0,
     per_page: 10,
     grade: 0,
+    admissionStatus: 0
   };
 
   get params() {
@@ -120,20 +120,16 @@ export class StudentsStudentRecordsComponent implements OnInit {
   async getStudents() {
     this.isLoading = true;
     
-    //for filtering
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);    
-
     (await this.studentService
-      .getAllStudents())
+      .getStudentsPaginated(this.query.page, this.query.per_page, this.query.admissionStatus, this.query.grade))
       .pipe(
         finalize(() => {
           this.isLoading = false;
         })
       )
       .subscribe(res => {
-        this.students = res.filter(student => new Date(student.date_of_admission) > oneMonthAgo);
-        this.total = res.length;
+        this.students = res.students;
+        this.total = res.total;
         this.isLoading = false;
       });
   }
@@ -146,5 +142,21 @@ export class StudentsStudentRecordsComponent implements OnInit {
     console.log("on init")
     await this.getStudents();
   }
+
+  openContactInfo(studentRecord: any): void {
+    const dialogRef = this.dialog.open(ContactInfoComponent, {
+      width: '400px',
+      data: { 
+        studentRecord
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result.success === true) {
+        // Refresh the table after a successful payment
+
+      }
+    });
+  }  
 
 }
