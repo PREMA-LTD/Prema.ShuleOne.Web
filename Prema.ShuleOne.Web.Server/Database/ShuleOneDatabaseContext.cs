@@ -46,6 +46,19 @@ namespace Prema.ShuleOne.Web.Server.Database
         public DbSet<TutionFeesStructure> TutionFeesStructure { get; set; }
         public DbSet<FeeType> FeeType { get; set; }
         public DbSet<Document> Document { get; set; }
+        public DbSet<Account> Account { get; set; }
+        public DbSet<Transaction> Transaction { get; set; }
+        public DbSet<JournalEntry> JournalEntry { get; set; }
+        public DbSet<GeneralLedger> GeneralLedger { get; set; }
+        //public DbSet<Invoice> Invoice { get; set; }
+        public DbSet<Revenue> Revenue { get; set; }
+        public DbSet<Expense> Expense { get; set; }
+        public DbSet<AccountTypes> AccountTypes { get; set; }
+        public DbSet<TransactionTypes> TransactionTypes { get; set; }
+        //public DbSet<InvoiceStatuses> InvoiceStatuses { get; set; }
+        public DbSet<PaymentMethods> PaymentMethods { get; set; }
+        public DbSet<Receipt> Receipts { get; set; }
+        public DbSet<ReceiptItem> ReceiptItems { get; set; }
+        public DbSet<ReceiptItemTypes> ReceiptItemTypes { get; set; }
     }
-
 }

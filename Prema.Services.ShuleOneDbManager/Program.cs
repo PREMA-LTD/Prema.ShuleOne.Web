@@ -5,6 +5,13 @@ using Prema.Services.ShuleOneDbManager;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Configure(builder.Configuration.GetSection("Kestrel"));
+});
+
+
 string connectionString = builder.Configuration.GetConnectionString("MySqlConnectionString")!;
 var serverVersion = new MySqlServerVersion(new Version(8, 0, 29));
 

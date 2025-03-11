@@ -101,6 +101,8 @@ app.MapFinanceEndpints();
 
 app.MapReportsEndpoint();
 
+app.MapAccountingEndpoints();
+
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)

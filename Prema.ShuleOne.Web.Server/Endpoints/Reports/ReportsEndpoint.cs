@@ -23,6 +23,7 @@ using log4net.Config;
 using log4net.Repository;
 using log4net;
 using System.Reflection;
+using CSharpFunctionalExtensions;
 
 namespace Prema.ShuleOne.Web.Server.Endpoints.Reports;
 
@@ -35,8 +36,12 @@ public static class ReportsEndpoint
 
         group.MapPost("/GenerateAdmissionLetter", async Task<Results<Ok<string>, NotFound, BadRequest<string>>> ([FromBody] AdmissionLetterDetails admissionLetterDetails, FileGeneratorService fileGeneratorService) =>
         {
+            string fileName = $"{admissionLetterDetails.AdmissionNumber} - {admissionLetterDetails.StudentOtherNames} {admissionLetterDetails.StudentFirstName}_AdmissionLetter{DateTime.UtcNow.ToString("ddMMyyHHmmss")}.pdf";
+            string outputFilePath = $"/GeneratedReports/AdmissionLeters/{fileName}";
+            string templateFileName = "LifewayAdmissionLetterTemplate.docx";
+            JObject reportDetails = JObject.FromObject(admissionLetterDetails);
 
-            return await fileGeneratorService.GenerateFile(admissionLetterDetails);
+            return await fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
 
         })
         .WithName("GenerateAdmissionLetter")

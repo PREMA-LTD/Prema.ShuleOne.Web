@@ -11,12 +11,13 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using MassTransit;
 using MassTransit.Transports;
 using Prema.Services.StorageHub.Contracts;
+using CSharpFunctionalExtensions;
 
 namespace Prema.ShuleOne.Web.Server.Services
 {
     public class FileGeneratorService(ILogger<FileGeneratorService> logger, IPublishEndpoint publishEndpoint)
     {
-        public async Task<Results<Ok<string>, NotFound, BadRequest<string>>> GenerateFile(AdmissionLetterDetails admissionLetterDetails)
+        public async Task<Results<Ok<string>, NotFound, BadRequest<string>>> GenerateFile(JObject reportDetails, string fileName, string outputFilePath, string templateFileName)
         {
             try
             {
@@ -29,15 +30,12 @@ namespace Prema.ShuleOne.Web.Server.Services
                 // Creates an asset from source file and upload
                 //using Stream inputStream = File.OpenRead(@"documentMergeTemplate.docx");
                 string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Endpoints", "Reports");
-                using Stream inputStream = File.OpenRead(Path.Combine(basePath, "Templates", "LifewayAdmissionLetterTemplate.docx"));
+                using Stream inputStream = File.OpenRead(Path.Combine(basePath, "Templates", templateFileName));
                 IAsset asset = pdfServices.Upload(inputStream, PDFServicesMediaType.DOCX.GetMIMETypeValue());
-
-                // Setup input data for the document merge process
-                JObject jsonDataForMerge = JObject.FromObject(admissionLetterDetails);
 
                 // Create parameters for the job
                 DocumentMergeParams documentMergeParams = DocumentMergeParams.DocumentMergeParamsBuilder()
-                    .WithJsonDataForMerge(jsonDataForMerge)
+                    .WithJsonDataForMerge(reportDetails)
                     .WithOutputFormat(OutputFormat.PDF)
                     .Build();
 
@@ -55,9 +53,8 @@ namespace Prema.ShuleOne.Web.Server.Services
 
 
                 // Creating output streams and copying stream asset's content to it
-                string formattedDateTime = DateTime.UtcNow.ToString("ddMMyyHHmmss");
-                string fileName = $"{admissionLetterDetails.AdmissionNumber} - {admissionLetterDetails.StudentOtherNames} {admissionLetterDetails.StudentFirstName}_AdmissionLetter{formattedDateTime}.pdf";
-                string outputFilePath = $"{basePath}/GeneratedReports/AdmissionLeters/{fileName}";
+                string formattedDateTime = DateTime.UtcNow.ToString("ddMMyyHHmmss");                
+                outputFilePath = $"{basePath}{outputFilePath}";
 
                 // Ensure directory exists
                 new FileInfo(outputFilePath).Directory.Create();

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prema.ShuleOne.Web.Server.Database;
 
@@ -11,9 +12,11 @@ using Prema.ShuleOne.Web.Server.Database;
 namespace Prema.Services.ShuleOneDbManager.Migrations
 {
     [DbContext(typeof(ShuleOneDatabaseContext))]
-    partial class ShuleOneDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250311075924_AddedMoreAccounting")]
+    partial class AddedMoreAccounting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -472,7 +475,7 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
 
                     b.HasIndex("Receiptid");
 
-                    b.ToTable("receipt_item");
+                    b.ToTable("receiot_item");
                 });
 
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.ReceiptItemTypes", b =>

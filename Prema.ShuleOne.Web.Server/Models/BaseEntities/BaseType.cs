@@ -10,4 +10,11 @@ namespace Prema.ShuleOne.Web.Server.Models.BaseTypes
         public int id { get; set; }
         public string name { get; set; }
     }
+    public class BaseTypeNoTracking
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        public int id { get; set; }
+        public string name { get; set; }
+    }
 }

@@ -7,6 +7,8 @@ using Prema.ShuleOne.Web.Server.BulkSms;
 using Prema.ShuleOne.Web.Server.Services;
 using AutoMapper;
 using AutoMapper.Execution;
+using Newtonsoft.Json.Linq;
+using Prema.ShuleOne.Web.Server.Endpoints.Reports;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 
 public static class StudentEndpoints
@@ -224,7 +226,7 @@ public static class StudentEndpoints
             await db.SaveChangesAsync();
 
             //generate file
-            await fileGeneratorService.GenerateFile(new Reports.AdmissionLetterDetails()
+            Reports.AdmissionLetterDetails admissionLetterDetails = new Reports.AdmissionLetterDetails()
             {
                 ParentName = primaryContact.other_names + " " + primaryContact.surname,
                 StudentOtherNames = student.other_names,
@@ -236,7 +238,13 @@ public static class StudentEndpoints
                 HeadteacherName = "Mr. Bett",
                 HeadteacherContact = "0712290257",
                 HeadteacherSign = "https://files.prema.co.ke/enock_signature.jpg"
-            });
+            };
+
+            string fileName = $"{admissionLetterDetails.AdmissionNumber} - {admissionLetterDetails.StudentOtherNames} {admissionLetterDetails.StudentFirstName}_AdmissionLetter{DateTime.UtcNow.ToString("ddMMyyHHmmss")}.pdf";
+            string outputFilePath = $"/GeneratedReports/AdmissionLeters/{fileName}";
+            string templateFileName = "LifewayAdmissionLetterTemplate.docx";
+            JObject reportDetails = JObject.FromObject(admissionLetterDetails);
+            await fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
 
             //send message to parent/guardian
             //string parentName = $"{primaryContact.other_names} {primaryContact.surname}";
