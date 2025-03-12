@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prema.ShuleOne.Web.Server.Database;
 
@@ -11,9 +12,11 @@ using Prema.ShuleOne.Web.Server.Database;
 namespace Prema.Services.ShuleOneDbManager.Migrations
 {
     [DbContext(typeof(ShuleOneDatabaseContext))]
-    partial class ShuleOneDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250312114712_FixedDecimalPlaces")]
+    partial class FixedDecimalPlaces
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,20 +247,6 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.ToTable("fee_type");
                 });
 
-            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.FileLocationTypes", b =>
-                {
-                    b.Property<int>("id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("id");
-
-                    b.ToTable("file_location_types");
-                });
-
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.GeneralLedger", b =>
                 {
                     b.Property<int>("id")
@@ -428,12 +417,6 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
 
                     b.Property<DateTime>("date_created")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<string>("file_location")
-                        .HasColumnType("longtext");
-
-                    b.Property<int?>("file_location_type")
-                        .HasColumnType("int");
 
                     b.Property<int>("fk_revenue_id")
                         .HasColumnType("int");

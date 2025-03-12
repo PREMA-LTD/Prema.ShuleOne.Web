@@ -15,6 +15,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         public string name { get; set; }
         [Required]
         public AccountType account_type { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
         public decimal balance { get; set; } = 0.00m;
         public string created_by { get; set; } //if system generated, this will be 0 else user id
         public DateTime date_created { get; set; } = DateTime.UtcNow;
@@ -49,6 +50,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         [Required]
         public string reference_id { get; set; }
         [Required]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal amount { get; set; }
         [Required]
         public TransactionType transaction_type { get; set; }
@@ -58,6 +60,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         public DateTime date_created { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
+        [ForeignKey("fk_account_id")]
         public Account Account { get; set; }
     }
 
@@ -81,12 +84,16 @@ namespace Prema.ShuleOne.Web.Server.Models
         public int fk_transaction_id { get; set; }
         [Required]
         public int fk_account_id { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
         public decimal debit { get; set; } = 0.00m;
+        [Column(TypeName = "decimal(18,2)")]
         public decimal credit { get; set; } = 0.00m;
         public DateTime date_created { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
+        [ForeignKey("fk_transaction_id")]
         public Transaction Transaction { get; set; }
+        [ForeignKey("fk_account_id")]
         public Account Account { get; set; }
     }
 
@@ -103,11 +110,15 @@ namespace Prema.ShuleOne.Web.Server.Models
         public DateTime date_created { get; set; }
         [Required]
         public string description { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
         public decimal debit { get; set; } = 0.00m;
+        [Column(TypeName = "decimal(18,2)")]
         public decimal credit { get; set; } = 0.00m;
+        [Column(TypeName = "decimal(18,2)")]
         public decimal balance { get; set; }
 
         // Navigation Property
+        [ForeignKey("fk_account_id")]
         public Account Account { get; set; }
     }
 
@@ -157,6 +168,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         //[Required]
         //public int fk_invoice_id { get; set; }
         [Required]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal amount { get; set; }
         public string paid_by { get; set; }
         public string payment_reference { get; set; }
@@ -192,6 +204,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         [Required]
         public string description { get; set; }
         [Required]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal amount { get; set; }
         [Required]
         [MaxLength(100)]
@@ -213,11 +226,15 @@ namespace Prema.ShuleOne.Web.Server.Models
         public int id { get; set; }
         public int fk_student_id { get; set; }
         public int fk_revenue_id { get; set; }
+        public string? file_location { get; set; }
+        public FileLocationType? file_location_type { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
 
         public ICollection<ReceiptItem> ReceiptItems { get; set; }
 
-        public Revenue Revenue { get; set; }    
+        [ForeignKey("fk_revenue_id")]
+        public Revenue Revenue { get; set; }
+        [ForeignKey("fk_student_id")]
         public Student Student { get; set; }    
     }
 
@@ -227,11 +244,13 @@ namespace Prema.ShuleOne.Web.Server.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int id { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
         public decimal amount { get; set; }
         public ReceiptItemType item_type { get; set; }
         public int fk_receipt_id { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
 
+        [ForeignKey("fk_receipt_id")]
         public Receipt Receipt { get; set; }
     }
 
@@ -250,5 +269,17 @@ namespace Prema.ShuleOne.Web.Server.Models
         Tour = 4,
         Computer = 5,
         Sports = 6
+    }
+
+    [Table("file_location_types")]
+    public class FileLocationTypes : BaseTypeNoTracking
+    {
+    }
+    public enum FileLocationType
+    {
+        Local = 0,
+        ZohoDrive = 1,
+        GoogleDrive = 2,
+        S3Bucket = 3
     }
 }

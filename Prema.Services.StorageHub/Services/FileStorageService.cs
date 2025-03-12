@@ -13,13 +13,13 @@ using Microsoft.Extensions.Options;
 
 namespace Prema.Services.StorageHub.Services;
 
-public class FileStorageService
+public class GoogleFileStorageService
 {
     private readonly IConnectionMultiplexer _redis;
     private readonly DriveService _googleDriveService;
     private readonly GoogleDriveApiSettings _googleDriveApiSettings;
 
-    public FileStorageService(IConnectionMultiplexer redis, DriveService googleDriveService, IOptionsMonitor<GoogleDriveApiSettings> googleDriveApiSettings)
+    public GoogleFileStorageService(IConnectionMultiplexer redis, DriveService googleDriveService, IOptionsMonitor<GoogleDriveApiSettings> googleDriveApiSettings)
     {
         _redis = redis;
         _googleDriveService = googleDriveService;

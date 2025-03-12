@@ -94,6 +94,13 @@ internal class ShuleOneDbInitializer(IServiceProvider serviceProvider, ILogger<S
             dbContext.ReceiptItemTypes,
             ft => new ReceiptItemTypes { id = (int)ft, name = ft.ToString() },
             cancellationToken);
+
+        //insert receipt itemm types
+        await InsertEnumValues<FileLocationType, FileLocationTypes>(
+            dbContext,
+            dbContext.FileLocationTypes,
+            ft => new FileLocationTypes { id = (int)ft, name = ft.ToString() },
+            cancellationToken);
     }
 
     private static async Task InsertEnumValues<TEnum, TEntity>(

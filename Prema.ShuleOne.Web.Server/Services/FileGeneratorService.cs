@@ -12,10 +12,12 @@ using MassTransit;
 using MassTransit.Transports;
 using Prema.Services.StorageHub.Contracts;
 using CSharpFunctionalExtensions;
+using Microsoft.Extensions.Options;
+using Prema.ShuleOne.Web.Server.AppSettings;
 
 namespace Prema.ShuleOne.Web.Server.Services
 {
-    public class FileGeneratorService(ILogger<FileGeneratorService> logger, IPublishEndpoint publishEndpoint)
+    public class FileGeneratorService(ILogger<FileGeneratorService> logger, IPublishEndpoint publishEndpoint, IOptionsMonitor<ReportSettings> reportSettings)
     {
         public async Task<Results<Ok<string>, NotFound, BadRequest<string>>> GenerateFile(JObject reportDetails, string fileName, string outputFilePath, string templateFileName)
         {
@@ -29,8 +31,8 @@ namespace Prema.ShuleOne.Web.Server.Services
 
                 // Creates an asset from source file and upload
                 //using Stream inputStream = File.OpenRead(@"documentMergeTemplate.docx");
-                string basePath = Path.Combine(Directory.GetCurrentDirectory(), "Endpoints", "Reports");
-                using Stream inputStream = File.OpenRead(Path.Combine(basePath, "Templates", templateFileName));
+                string storageBasePath = reportSettings.CurrentValue.FileStoragePath;
+                using Stream inputStream = File.OpenRead(Path.Combine(reportSettings.CurrentValue.ReportTemplatePath, templateFileName));
                 IAsset asset = pdfServices.Upload(inputStream, PDFServicesMediaType.DOCX.GetMIMETypeValue());
 
                 // Create parameters for the job
@@ -51,10 +53,8 @@ namespace Prema.ShuleOne.Web.Server.Services
                 IAsset resultAsset = pdfServicesResponse.Result.Asset;
                 StreamAsset streamAsset = pdfServices.GetContent(resultAsset);
 
-
-                // Creating output streams and copying stream asset's content to it
-                string formattedDateTime = DateTime.UtcNow.ToString("ddMMyyHHmmss");                
-                outputFilePath = $"{basePath}{outputFilePath}";
+                // Creating output streams and copying stream asset's content to it       
+                outputFilePath = $"{storageBasePath}{outputFilePath}";
 
                 // Ensure directory exists
                 new FileInfo(outputFilePath).Directory.Create();
@@ -81,33 +81,33 @@ namespace Prema.ShuleOne.Web.Server.Services
                     fileContent = fileBytes,
                     key = fileName
                 };
-                await publishEndpoint.Publish(message);
+                //await publishEndpoint.Publish(message);
 
                 return TypedResults.Ok<string>("Generated successfully.");
             }
             catch (ServiceUsageException ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex);
+                logger.LogError("Exception encountered while executing operation", ex.Message);
                 return TypedResults.BadRequest<string>("ServiceUsageException: " + ex.Message);
             }
             catch (ServiceApiException ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex);
+                logger.LogError("Exception encountered while executing operation", ex.Message);
                 return TypedResults.BadRequest<string>("ServiceApiException: " + ex.Message);
             }
             catch (SDKException ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex);
+                logger.LogError("Exception encountered while executing operation", ex.Message);
                 return TypedResults.BadRequest<string>("SDKException: " + ex.Message);
             }
             catch (IOException ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex);
+                logger.LogError("Exception encountered while executing operation", ex.Message);
                 return TypedResults.BadRequest<string>("IOException: " + ex.Message);
             }
             catch (Exception ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex);
+                logger.LogError("Exception encountered while executing operation", ex.Message);
                 return TypedResults.BadRequest<string>("Exception: " + ex.Message);
             }
         }

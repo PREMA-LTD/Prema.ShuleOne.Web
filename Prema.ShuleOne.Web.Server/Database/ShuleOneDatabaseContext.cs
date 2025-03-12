@@ -60,5 +60,6 @@ namespace Prema.ShuleOne.Web.Server.Database
         public DbSet<Receipt> Receipts { get; set; }
         public DbSet<ReceiptItem> ReceiptItems { get; set; }
         public DbSet<ReceiptItemTypes> ReceiptItemTypes { get; set; }
+        public DbSet<FileLocationTypes> FileLocationTypes { get; set; }
     }
 }

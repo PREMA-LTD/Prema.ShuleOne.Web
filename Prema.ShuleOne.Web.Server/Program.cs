@@ -48,6 +48,7 @@ builder.Services.AddDbContext<ShuleOneDatabaseContext>(
 builder.Services.AddSingleton<IBulkSms, MobileSasa>();
 builder.Services.Configure<MobileSasaSettings>(builder.Configuration.GetSection("MobileSasa"));
 builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection("TelegramBot"));
+builder.Services.Configure<ReportSettings>(builder.Configuration.GetSection("ReportSettings"));
 builder.Services.AddSingleton<TelegramBot>();
 builder.Services.AddSingleton<Logger>();
 builder.Services.AddSingleton<MpesaRequestService>();
