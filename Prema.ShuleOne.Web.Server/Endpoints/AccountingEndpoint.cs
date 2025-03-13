@@ -12,6 +12,7 @@ using Prema.ShuleOne.Web.Server.Endpoints.Reports;
 using static Prema.ShuleOne.Web.Server.Controllers.FinanceEndpint;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 using CSharpFunctionalExtensions;
+using global::Telegram.Bot.Types;
 using Microsoft.Extensions.Options;
 using Prema.ShuleOne.Web.Server.AppSettings;
 using System.Security.Cryptography.Pkcs;
@@ -29,7 +30,7 @@ public static class AccountingEndpoints
         var group = routes.MapGroup("/api/Accounting").WithTags("Accounting");
 
         //add expense
-        group.MapPost("/Revenue", async (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
+        group.MapPost("/Revenue", async (Revenue revenue, ShuleOneDatabaseContext db, string accountName, FileGeneratorService fileGeneratorService) =>
         {
             //save revenue record
             db.Revenue.Add(revenue);
@@ -42,51 +43,61 @@ public static class AccountingEndpoints
             if (studentDetailsResult.IsFailure)
             {
                 logger.LogWarning(studentDetailsResult.Error);
-                return TypedResults.Created($"/api/Accounting/{revenue}", revenue);
             }
             else
             {
                 studentDetails = studentDetailsResult.Value;
+
+                await ProcessReceipt(studentDetails, revenue, db, logger, fileGeneratorService);
+
+                //notify parent via sms
+                //already done on budget tracker - to be moved here later
+
+
+                //create transactions
+                //get id of default account
+                int defaultAccountId = GetDefaultAccountId(revenue, db);
+                if (defaultAccountId == 0)
+                {
+                    logger.LogWarning("Default account not set.");
+
+                    revenue.status = RevenueStatus.TransactionPending;
+                }
+                else
+                {
+                    Transaction transaction = new Transaction()
+                    {
+                        amount = revenue.amount,
+                        description = "School Fee Paid",
+                        reference_id = revenue.payment_reference,
+                        created_by = "0",
+                    };
+
+                    db.Transaction.Add(transaction);
+                    await db.SaveChangesAsync();
+
+                    db.JournalEntry.Add(new JournalEntry()
+                    {
+                        amount = revenue.amount,
+                        fk_account_id = defaultAccountId, //main bank
+                        fk_transaction_id = transaction.id,
+                        type = JournalEntryType.Credit
+                    });
+
+                    db.JournalEntry.Add(new JournalEntry()
+                    {
+                        amount = revenue.amount,
+                        fk_account_id = 1, //fees TODO: get account id for fees
+                        fk_transaction_id = transaction.id,
+                        type = JournalEntryType.Debit
+                    });
+
+                    revenue.status = RevenueStatus.Allocated;
+                }
             }
 
-            //create receipt record
-            Receipt receipt = new Receipt
-            {
-                fk_student_id = studentDetails.id,
-                fk_revenue_id = revenue.id,
-            };
-
-            db.Receipts.Add(receipt);
-            await db.SaveChangesAsync(); //error here
-
-            ReceiptItem receiptItem = new ReceiptItem
-            {
-                fk_receipt_id = receipt.id,
-                amount = revenue.amount,
-                item_type = ReceiptItemType.Generic
-            };
-
-            db.ReceiptItems.Add(receiptItem);
+            db.Revenue.Update(revenue);
             await db.SaveChangesAsync();
-
-
-            //generate receipt
-            var generateReceiptFileResult = GenerateReceiptFile(logger, studentDetails, receipt, revenue, fileGeneratorService, db);
-
-
-            //update receipt record with file location
-            if (generateReceiptFileResult.IsSuccess)
-            {
-                receipt.file_location = generateReceiptFileResult.Value;
-                receipt.file_location_type = FileLocationType.Local;
-                db.Receipts.Update(receipt);
-                await db.SaveChangesAsync();
-            }
-
-            //notify parent
-            //already done on budget tracker - to be moved here later
-
-
 
             return TypedResults.Created($"/api/Finance/{revenue}", revenue);
         })
@@ -123,6 +134,55 @@ public static class AccountingEndpoints
 
     }
 
+    private static int GetDefaultAccountId(Revenue revenue, ShuleOneDatabaseContext db)
+    {
+        var account = db.Account.FirstOrDefault(a => a.default_source == revenue.payment_method);
+
+        if(account == null)
+        {
+            return 0;
+        }
+
+        return account.id;
+    }
+
+    private static async Task ProcessReceipt(Student studentDetails, Revenue revenue, ShuleOneDatabaseContext db, ILogger logger, FileGeneratorService fileGeneratorService)
+    {
+        //create receipt record
+        Receipt receipt = new Receipt
+        {
+            fk_student_id = studentDetails.id,
+            fk_revenue_id = revenue.id,
+            status = ReceiptStatus.Valid
+        };
+
+        db.Receipts.Add(receipt);
+        await db.SaveChangesAsync(); //error here
+
+        ReceiptItem receiptItem = new ReceiptItem
+        {
+            fk_receipt_id = receipt.id,
+            amount = revenue.amount,
+            item_type = ReceiptItemType.Generic
+        };
+
+        db.ReceiptItems.Add(receiptItem);
+        await db.SaveChangesAsync();
+
+
+        //generate receipt
+        var generateReceiptFileResult = GenerateReceiptFile(logger, studentDetails, receipt, revenue, fileGeneratorService, db);
+
+
+        //update receipt record with file location
+        if (generateReceiptFileResult.IsSuccess)
+        {
+            receipt.file_location = generateReceiptFileResult.Value;
+            receipt.file_location_type = FileLocationType.Local;
+            db.Receipts.Update(receipt);
+            await db.SaveChangesAsync();
+        }
+    }
     private static Result<Student> GetStudentDetails(ShuleOneDatabaseContext db, string accountNumber)
     {
         if (string.IsNullOrEmpty(accountNumber))

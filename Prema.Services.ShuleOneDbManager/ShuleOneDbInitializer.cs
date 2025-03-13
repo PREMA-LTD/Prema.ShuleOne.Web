@@ -68,10 +68,10 @@ internal class ShuleOneDbInitializer(IServiceProvider serviceProvider, ILogger<S
             cancellationToken);
 
         //insert transaction types
-        await InsertEnumValues<TransactionType, TransactionTypes>(
+        await InsertEnumValues<JournalEntryType, JournalEntryTypes>(
             dbContext,
-            dbContext.TransactionTypes,
-            ft => new TransactionTypes { id = (int)ft, name = ft.ToString() },
+            dbContext.JournalEntryTypes,
+            ft => new JournalEntryTypes { id = (int)ft, name = ft.ToString() },
             cancellationToken);
 
         //insert account types
@@ -100,6 +100,20 @@ internal class ShuleOneDbInitializer(IServiceProvider serviceProvider, ILogger<S
             dbContext,
             dbContext.FileLocationTypes,
             ft => new FileLocationTypes { id = (int)ft, name = ft.ToString() },
+            cancellationToken);
+
+        //insert receipt itemm types
+        await InsertEnumValues<RevenueStatus, RevenueStatuses>(
+            dbContext,
+            dbContext.RevenueStatuses,
+            ft => new RevenueStatuses { id = (int)ft, name = ft.ToString() },
+            cancellationToken);
+
+        //insert receipt itemm types
+        await InsertEnumValues<ReceiptStatus, ReceiptStatuses>(
+            dbContext,
+            dbContext.ReceiptStatus,
+            ft => new ReceiptStatus { id = (int)ft, name = ft.ToString() },
             cancellationToken);
     }
 
