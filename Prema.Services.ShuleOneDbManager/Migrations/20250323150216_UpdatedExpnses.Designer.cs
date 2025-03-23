@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prema.ShuleOne.Web.Server.Database;
 
@@ -11,9 +12,11 @@ using Prema.ShuleOne.Web.Server.Database;
 namespace Prema.Services.ShuleOneDbManager.Migrations
 {
     [DbContext(typeof(ShuleOneDatabaseContext))]
-    partial class ShuleOneDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250323150216_UpdatedExpnses")]
+    partial class UpdatedExpnses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,41 +46,20 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.Property<int?>("default_source")
                         .HasColumnType("int");
 
-                    b.Property<int>("fk_account_category_id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("fk_account_type_id")
-                        .HasColumnType("int");
-
                     b.Property<string>("name")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
+
+                    b.Property<int>("type")
+                        .HasColumnType("int");
 
                     b.HasKey("id");
 
                     b.HasIndex("default_source")
                         .IsUnique();
 
-                    b.HasIndex("fk_account_category_id");
-
-                    b.HasIndex("fk_account_type_id");
-
                     b.ToTable("account");
-                });
-
-            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.AccountCategories", b =>
-                {
-                    b.Property<int>("id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("id");
-
-                    b.ToTable("account_category");
                 });
 
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.AccountTypes", b =>
@@ -222,16 +204,26 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.ToTable("employee_bank_details");
                 });
 
-            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.ExpenseType", b =>
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Expense", b =>
                 {
                     b.Property<int>("id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("added_by")
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id"));
+
+                    b.Property<decimal>("amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("category")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime>("date_created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("date_paid")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("description")
@@ -244,7 +236,11 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.Property<int>("fk_to_account_id")
                         .HasColumnType("int");
 
-                    b.Property<string>("name")
+                    b.Property<string>("paid_by")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("payment_reference")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -254,7 +250,7 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
 
                     b.HasIndex("fk_to_account_id");
 
-                    b.ToTable("expense_types");
+                    b.ToTable("expense");
                 });
 
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.FeeType", b =>
@@ -901,25 +897,6 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.ToTable("teacher");
                 });
 
-            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Account", b =>
-                {
-                    b.HasOne("Prema.ShuleOne.Web.Server.Models.AccountCategories", "AccountCategories")
-                        .WithMany()
-                        .HasForeignKey("fk_account_category_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Prema.ShuleOne.Web.Server.Models.AccountTypes", "AccountTypes")
-                        .WithMany()
-                        .HasForeignKey("fk_account_type_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AccountCategories");
-
-                    b.Navigation("AccountTypes");
-                });
-
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Document", b =>
                 {
                     b.HasOne("Prema.ShuleOne.Web.Server.Models.Student", "Student")
@@ -950,7 +927,7 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
                     b.Navigation("Ward");
                 });
 
-            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.ExpenseType", b =>
+            modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Expense", b =>
                 {
                     b.HasOne("Prema.ShuleOne.Web.Server.Models.Account", "FromAccount")
                         .WithMany()

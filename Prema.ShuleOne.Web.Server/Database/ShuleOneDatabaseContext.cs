@@ -56,7 +56,7 @@ namespace Prema.ShuleOne.Web.Server.Database
         //public DbSet<GeneralLedger> GeneralLedger { get; set; }
         //public DbSet<Invoice> Invoice { get; set; }
         public DbSet<Revenue> Revenue { get; set; }
-        public DbSet<Expense> Expense { get; set; }
+        //public DbSet<Expense> Expense { get; set; }
         public DbSet<AccountTypes> AccountTypes { get; set; }
         public DbSet<JournalEntryTypes> JournalEntryTypes { get; set; }
         //public DbSet<InvoiceStatuses> InvoiceStatuses { get; set; }
@@ -67,5 +67,8 @@ namespace Prema.ShuleOne.Web.Server.Database
         public DbSet<FileLocationTypes> FileLocationTypes { get; set; }
         public DbSet<RevenueStatuses> RevenueStatuses { get; set; }
         public DbSet<ReceiptStatuses> ReceiptStatuses { get; set; }
+        public DbSet<TransactionTypes> TransactionTypes { get; set; }
+        public DbSet<ExpenseType> ExpenseTypes { get; set; }
+        public DbSet<AccountCategories> AccountCategories { get; set; }
     }
 }

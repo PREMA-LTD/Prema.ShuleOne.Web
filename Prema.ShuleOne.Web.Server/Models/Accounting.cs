@@ -14,19 +14,27 @@ namespace Prema.ShuleOne.Web.Server.Models
         [MaxLength(255)]
         public string name { get; set; }
         [Required]
-        public AccountType type { get; set; }
+        public int fk_account_type_id { get; set; }
+        public int fk_account_category_id { get; set; } = 0; //0 means uncategorised
         public PaymentMethod? default_source { get; set; } //unique and nullable
         [Column(TypeName = "decimal(18,2)")]
         public decimal balance { get; set; } = 0.00m;
         public string created_by { get; set; } //if system generated, this will be 0 else user id
         public DateTime date_created { get; set; } = DateTime.UtcNow;
 
+        [ForeignKey("fk_account_category_id")]
+        public AccountCategories AccountCategories { get; set; }
+        [ForeignKey("fk_account_type_id")]
+        public AccountTypes AccountTypes { get; set; }
         // Navigation Properties
         public ICollection<Transaction> Transactions { get; set; }
         public ICollection<JournalEntry> JournalEntries { get; set; }
-        //public ICollection<GeneralLedger> GeneralLedger { get; set; }
     }
 
+    [Table("account_category")]
+    public class AccountCategories : BaseTypeNoTracking
+    {
+    }
 
     [Table("account_type")]
     public class AccountTypes : BaseTypeNoTracking
@@ -40,6 +48,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         Revenue = 3,
         Expense = 4
     }
+
 
     [Table("transaction")]
     public class Transaction
@@ -55,16 +64,29 @@ namespace Prema.ShuleOne.Web.Server.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal amount { get; set; }
         //[Required]
-        //public TransactionType transaction_type { get; set; }
-        //[Required]
-        //public int fk_account_id { get; set; }
+        public TransactionType transaction_type { get; set; } = TransactionType.Other;
+        public int? fk_transaction_type_identifier { get; set; }
         public string created_by { get; set; } //if system generated, this will be 0 else user id
         public DateTime date_created { get; set; } = DateTime.UtcNow;
-
-        // Navigation Properties
-        //[ForeignKey("fk_account_id")]
-        //public Account Account { get; set; }
     }
+
+    [Table("transaction_type")]
+    public class TransactionTypes : BaseTypeNoTracking
+    {
+    }
+    public enum TransactionType
+    {
+        Other = 0,
+        FeeReceived = 1,
+        ExpensePaid = 2,
+        DonationReceived = 3,
+        DiscountPaid = 4,
+        AssetReceived = 5,
+        LoanReceived = 6,
+        LoanPaid = 7,
+        AssetSold = 8,
+    }
+
 
     [Table("journal_entry_type")]
     public class JournalEntryTypes : BaseTypeNoTracking
@@ -89,7 +111,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal amount { get; set; } = 0.00m;
         [Required]
-        public JournalEntryType type { get; set; }
+        public int fk_journal_entry_type { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
@@ -97,69 +119,9 @@ namespace Prema.ShuleOne.Web.Server.Models
         public Transaction Transaction { get; set; }
         [ForeignKey("fk_account_id")]
         public Account Account { get; set; }
+        [ForeignKey("fk_journal_entry_type")]
+        public JournalEntryTypes JournalEntryTypes { get; set; }
     }
-
-
-    //[Table("general_ledger")]
-    //public class GeneralLedger
-    //{
-    //    [Key]
-    //    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    //    public int id { get; set; }
-    //    [Required]
-    //    public int fk_account_id { get; set; }
-    //    [Required]
-    //    public DateTime date_created { get; set; }
-    //    [Required]
-    //    public string description { get; set; }
-    //    [Column(TypeName = "decimal(18,2)")]
-    //    public decimal debit { get; set; } = 0.00m;
-    //    [Column(TypeName = "decimal(18,2)")]
-    //    public decimal credit { get; set; } = 0.00m;
-    //    [Column(TypeName = "decimal(18,2)")]
-    //    public decimal balance { get; set; }
-
-    //    // Navigation Property
-    //    [ForeignKey("fk_account_id")]
-    //    public Account Account { get; set; }
-    //}
-
-    #region Invoice not needed now
-    //[Table("invoice")]
-    //public class Invoice
-    //{
-    //    [Key]
-    //    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    //    public int id { get; set; }
-    //    [Required]
-    //    [MaxLength(50)]
-    //    public string invoice_number { get; set; }
-    //    [Required]
-    //    [MaxLength(255)]
-    //    public string client_name { get; set; }
-    //    [Required]
-    //    public decimal total_amount { get; set; }
-    //    [Required]
-    //    public DateTime due_date { get; set; }
-    //    public InvoiceStatus status { get; set; } = InvoiceStatus.Pending;
-    //    public DateTime date_created { get; set; } = DateTime.UtcNow;
-
-    //    // Navigation Properties
-    //    public ICollection<Revenue> Revenue { get; set; }
-    //}
-
-    //[Table("invoice_status")]
-    //public class InvoiceStatuses : BaseTypeNoTracking
-    //{
-    //}
-
-    //public enum InvoiceStatus
-    //{
-    //    Pending = 0,
-    //    Paid = 1,
-    //    Overdue = 2
-    //}
-    #endregion
 
     [Table("revenue")]
     public class Revenue
@@ -175,6 +137,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         public string paid_by { get; set; }
         public string payment_reference { get; set; }
         public string account_number { get; set; }
+        public int? fk_intended_account_number { get; set; }
         public RevenueStatus status { get; set; } = RevenueStatus.Unallocated;
         [Required]
         public DateTime payment_date { get; set; }
@@ -206,30 +169,39 @@ namespace Prema.ShuleOne.Web.Server.Models
     {
         Mpesa = 0,
         CardPDQ = 1,
-        BankTransfer = 2
+        BankTransfer = 2,
+        InternalTransaction = 3
     }
 
-    [Table("expense")]
-    public class Expense
+    public class TransactionTemplate
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id { get; set; }
-        [Required]
         public string description { get; set; }
-        [Required]
-        [Column(TypeName = "decimal(18,2)")]
         public decimal amount { get; set; }
-        [Required]
-        [MaxLength(100)]
         public string category { get; set; }
-        [Required]
+        public string payment_reference { get; set; }
+        public int fk_from_account_id { get; set; }
+        public int fk_to_account_id { get; set; }
         public string paid_by { get; set; }
-        [Required]
         public DateTime date_paid { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
     }
 
+    [Table("expense_types")]
+    public class ExpenseType : BaseTypeNoTracking
+    {
+        [Required]
+        public string description { get; set; }
+        public int fk_from_account_id { get; set; }
+        public int fk_to_account_id { get; set; }
+        [Required]
+        public string added_by { get; set; }
+        public DateTime date_created { get; set; } = DateTime.UtcNow;
+        [ForeignKey("fk_from_account_id")]
+        public Account FromAccount { get; set; }
+        [ForeignKey("fk_to_account_id")]
+        public Account ToAccount { get; set; }
+    }
+   
 
 
     [Table("receipt")]
@@ -242,7 +214,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         public int fk_revenue_id { get; set; }
         public string? file_location { get; set; }
         public FileLocationType? file_location_type { get; set; }
-        public ReceiptStatus status { get; set; };
+        public ReceiptStatus status { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
 
         public ICollection<ReceiptItem> ReceiptItems { get; set; }

@@ -12,7 +12,6 @@ using Prema.ShuleOne.Web.Server.Endpoints.Reports;
 using static Prema.ShuleOne.Web.Server.Controllers.FinanceEndpint;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 using CSharpFunctionalExtensions;
-using global::Telegram.Bot.Types;
 using Microsoft.Extensions.Options;
 using Prema.ShuleOne.Web.Server.AppSettings;
 using System.Security.Cryptography.Pkcs;
@@ -29,72 +28,82 @@ public static class AccountingEndpoints
 
         var group = routes.MapGroup("/api/Accounting").WithTags("Accounting");
 
-        //add expense
-        group.MapPost("/Revenue", async (Revenue revenue, ShuleOneDatabaseContext db, string accountName, FileGeneratorService fileGeneratorService) =>
+        //add revenue
+        group.MapPost("/Revenue", async (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
         {
-            //save revenue record
-            db.Revenue.Add(revenue);
-            await db.SaveChangesAsync();
+        //save revenue record
+        db.Revenue.Add(revenue);
+        await db.SaveChangesAsync();
 
-            //check if account number valid
-            Student studentDetails = new Student();
-            var studentDetailsResult = GetStudentDetails(db, revenue.account_number);
+        //check if account number valid
+        Student studentDetails = new Student();
+        var studentDetailsResult = GetStudentDetails(db, revenue.account_number);
 
-            if (studentDetailsResult.IsFailure)
+        if (studentDetailsResult.IsFailure)
+        {
+            logger.LogWarning(studentDetailsResult.Error);
+        }
+        else
+        {
+            studentDetails = studentDetailsResult.Value;
+
+            await ProcessReceipt(studentDetails, revenue, db, logger, fileGeneratorService);
+
+            //notify parent via sms
+            //already done on budget tracker - to be moved here later
+
+
+            //create transactions
+            //get id of default account
+            Account defaultBankAccount = GetDefaultAccountId(revenue.payment_method, db);
+            Account defaultFeeAccount = GetDefaultAccountId(PaymentMethod.InternalTransaction, db);
+            if (defaultBankAccount == null || defaultFeeAccount == null)
             {
-                logger.LogWarning(studentDetailsResult.Error);
+                logger.LogWarning("Default accounts not set.");
+
+                revenue.status = RevenueStatus.TransactionPending;
             }
             else
             {
-                studentDetails = studentDetailsResult.Value;
-
-                await ProcessReceipt(studentDetails, revenue, db, logger, fileGeneratorService);
-
-                //notify parent via sms
-                //already done on budget tracker - to be moved here later
-
-
-                //create transactions
-                //get id of default account
-                int defaultAccountId = GetDefaultAccountId(revenue, db);
-                if (defaultAccountId == 0)
+                Transaction transaction = new Transaction()
                 {
-                    logger.LogWarning("Default account not set.");
+                    amount = revenue.amount,
+                    description = "School Fee Paid",
+                    reference_id = revenue.payment_reference,
+                    created_by = "0",
+                    transaction_type = TransactionType.FeeReceived,
+                    fk_transaction_type_identifier = studentDetails.id,
+                };
 
-                    revenue.status = RevenueStatus.TransactionPending;
-                }
-                else
+                db.Transaction.Add(transaction);
+                await db.SaveChangesAsync();
+
+                db.JournalEntry.Add(new JournalEntry()
                 {
-                    Transaction transaction = new Transaction()
-                    {
-                        amount = revenue.amount,
-                        description = "School Fee Paid",
-                        reference_id = revenue.payment_reference,
-                        created_by = "0",
-                    };
+                    amount = revenue.amount,
+                    fk_account_id = defaultBankAccount.id, //main bank
+                    fk_transaction_id = transaction.id,
+                    fk_journal_entry_type = (int)JournalEntryType.Debit
+                });
 
-                    db.Transaction.Add(transaction);
+                db.JournalEntry.Add(new JournalEntry()
+                {
+                    amount = revenue.amount,
+                    fk_account_id = defaultFeeAccount.id, //fees TODO: get account id for fees
+                    fk_transaction_id = transaction.id,
+                    fk_journal_entry_type = (int)JournalEntryType.Credit
+                });
+
+                revenue.status = RevenueStatus.Allocated;
+                    revenue.fk_intended_account_number = studentDetails.id;
+
+                    defaultBankAccount.balance += revenue.amount;
+                    defaultFeeAccount.balance -= revenue.amount;
+                    db.Update(defaultFeeAccount);
+                    db.Update(defaultFeeAccount);
                     await db.SaveChangesAsync();
-
-                    db.JournalEntry.Add(new JournalEntry()
-                    {
-                        amount = revenue.amount,
-                        fk_account_id = defaultAccountId, //main bank
-                        fk_transaction_id = transaction.id,
-                        type = JournalEntryType.Credit
-                    });
-
-                    db.JournalEntry.Add(new JournalEntry()
-                    {
-                        amount = revenue.amount,
-                        fk_account_id = 1, //fees TODO: get account id for fees
-                        fk_transaction_id = transaction.id,
-                        type = JournalEntryType.Debit
-                    });
-
-                    revenue.status = RevenueStatus.Allocated;
-                }
             }
+        }
 
             db.Revenue.Update(revenue);
             await db.SaveChangesAsync();
@@ -123,27 +132,95 @@ public static class AccountingEndpoints
             var filePath = Path.Combine(reportSettings.CurrentValue.FileStoragePath, receipt.file_location);
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return Results.File(fileStream, "application/pdf", Path.GetFileName(receipt.file_location));
-        });
+        })
+        .WithName("GetReceipt")
+        .WithOpenApi();
 
-        //add revenue
+        //add expense
+        group.MapPost("/Expense", async (TransactionTemplate transactionTemplate, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
+        {
+            Transaction transaction = new Transaction()
+            {
+                amount = transactionTemplate.amount,
+                description = transactionTemplate.description,
+                reference_id = transactionTemplate.payment_reference,
+                created_by = "0",
+                transaction_type = TransactionType.ExpensePaid,
+                fk_transaction_type_identifier = transactionTemplate.fk_to_account_id,
+            };
+
+            db.Transaction.Add(transaction);
+            await db.SaveChangesAsync();
+
+            db.JournalEntry.Add(new JournalEntry()
+            {
+                amount = transactionTemplate.amount,
+                fk_account_id = transactionTemplate.fk_from_account_id, //main bank
+                fk_transaction_id = transaction.id,
+                fk_journal_entry_type = (int)JournalEntryType.Credit
+            });
+
+            db.JournalEntry.Add(new JournalEntry()
+            {
+                amount = transactionTemplate.amount,
+                fk_account_id = transactionTemplate.fk_to_account_id, //fees TODO: get account id for fees
+                fk_transaction_id = transaction.id,
+                fk_journal_entry_type = (int)JournalEntryType.Debit
+            });
+
+            return TypedResults.Created($"/api/Finance/{transactionTemplate}", transactionTemplate);
+        })
+        .WithName("RecordExpense")
+        .WithOpenApi();
 
         //get expenses
+        group.MapGet("/Expense/All", async (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1) =>
+        {
+            var allExpensesCount = 0;
+
+            var query = db.Transaction
+                .AsNoTracking()
+                .Where(c => c.transaction_type == TransactionType.ExpensePaid)
+                .OrderBy(c => c.id)
+                .AsQueryable();
+
+            // Apply filters dynamically based on the provided parameters
+            // TODO
+
+            // Count the total records for pagination
+            allExpensesCount = await query.CountAsync();
+
+            // Apply pagination and projection to DTO
+            var allExpenses = await query
+                .Skip(pageNumber * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Return results including pagination metadata
+            return Results.Ok(new
+            {
+                total = allExpensesCount,
+                expenseRecords = allExpenses
+            });
+        })
+        .WithName("GetExpenseRecordsPaginated")
+        .WithOpenApi();
 
         //get revenues
 
 
     }
 
-    private static int GetDefaultAccountId(Revenue revenue, ShuleOneDatabaseContext db)
+    private static Account? GetDefaultAccountId(PaymentMethod paymentMethod, ShuleOneDatabaseContext db)
     {
-        var account = db.Account.FirstOrDefault(a => a.default_source == revenue.payment_method);
+        Account account = db.Account.FirstOrDefault(a => a.default_source == paymentMethod);
 
         if(account == null)
         {
-            return 0;
+            return null;
         }
 
-        return account.id;
+        return account;
     }
 
     private static async Task ProcessReceipt(Student studentDetails, Revenue revenue, ShuleOneDatabaseContext db, ILogger logger, FileGeneratorService fileGeneratorService)
@@ -255,7 +332,14 @@ public static class AccountingEndpoints
             JObject reportDetails = JObject.FromObject(receiptDetails);
             var generateFileResult = fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
 
-            return Result.Success<string>(outputFilePath);
+            if (generateFileResult.IsCompletedSuccessfully)
+            {
+                return Result.Success<string>(outputFilePath);
+            }
+            else
+            {
+                return Result.Failure<string>($"Error generating file. {generateFileResult.Result}");
+            }
         }
         catch (Exception ex)
         {
