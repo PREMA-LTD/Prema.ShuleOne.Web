@@ -12,6 +12,7 @@ using Prema.ShuleOne.Web.Server.Endpoints.Reports;
 using static Prema.ShuleOne.Web.Server.Controllers.FinanceEndpint;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 using CSharpFunctionalExtensions;
+using global::Telegram.Bot.Types;
 using Microsoft.Extensions.Options;
 using Prema.ShuleOne.Web.Server.AppSettings;
 using System.Security.Cryptography.Pkcs;
@@ -29,7 +30,8 @@ public static class AccountingEndpoints
         var group = routes.MapGroup("/api/Accounting").WithTags("Accounting");
 
         //add revenue
-        group.MapPost("/Revenue", async (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
+        group.MapPost("/Revenue", async 
+            (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
         {
         //save revenue record
         db.Revenue.Add(revenue);
@@ -114,9 +116,10 @@ public static class AccountingEndpoints
         .WithOpenApi();
 
         //download receipt
-        group.MapGet("/Receipt/{receiptId}", async (int receiptId, ShuleOneDatabaseContext db, IOptionsMonitor<ReportSettings> reportSettings) =>
+        group.MapGet("/Receipt/{receiptId}", async 
+            (int revenueId, ShuleOneDatabaseContext db, IOptionsMonitor<ReportSettings> reportSettings, FileGeneratorService fileGeneratorService) =>
         {
-            var receipt = db.Receipts.Include(r => r.ReceiptItems).FirstOrDefault(r => r.id == receiptId);
+            var receipt = db.Receipts.AsNoTracking().FirstOrDefault(r => r.id == revenueId);
             if (receipt == null)
             {
                 logger.LogWarning("Receipt record not found.");
@@ -129,6 +132,42 @@ public static class AccountingEndpoints
                 return TypedResults.NotFound("Receipt file not found.");
             }
 
+            if(receipt.file_location == null)
+            {
+                //generate receipt
+                var studentDetails = db.Student.AsNoTracking().FirstOrDefault(s => s.id == receipt.fk_student_id);
+                var revenue = db.Revenue.AsNoTracking().FirstOrDefault(r => r.id == receipt.fk_revenue_id);
+
+                if(studentDetails == null)
+                {
+                    return TypedResults.NotFound("Student details not found.");
+                }
+
+                if(revenue == null)
+                {
+                    return TypedResults.NotFound("Revenue record not found.");
+                }
+
+                var generateReceiptFileResult = GenerateReceiptFile(logger, studentDetails, receipt, revenue, fileGeneratorService, db);
+
+                //update receipt record with file location
+                if (generateReceiptFileResult.IsSuccess)
+                {
+                    receipt.file_location = generateReceiptFileResult.Value;
+                    receipt.file_location_type = FileLocationType.Local;
+                    db.Receipts.Update(receipt);
+                    await db.SaveChangesAsync();
+                } else
+                {
+                    return TypedResults.NotFound("Error generating receipt file.");
+                }
+            }
+
+            if(receipt.file_location == null)
+            {
+                return TypedResults.NotFound("File not found.");
+            }
+
             var filePath = Path.Combine(reportSettings.CurrentValue.FileStoragePath, receipt.file_location);
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return Results.File(fileStream, "application/pdf", Path.GetFileName(receipt.file_location));
@@ -137,8 +176,23 @@ public static class AccountingEndpoints
         .WithOpenApi();
 
         //add expense
-        group.MapPost("/Expense", async (TransactionTemplate transactionTemplate, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
+        group.MapPost("/Expense", async Task<Results<Created<Transaction>, NotFound<string>>> 
+            (TransactionTemplate transactionTemplate, ShuleOneDatabaseContext db) =>
         {
+            var fromAccount = await db.Account.AsNoTracking()
+                .FirstOrDefaultAsync(a => a.id == transactionTemplate.fk_from_account_id);
+            if (fromAccount == null)
+            {
+                return TypedResults.NotFound("From account not found.");
+            }
+
+            var toAccount = await db.Account.AsNoTracking()
+                .FirstOrDefaultAsync(a => a.id == transactionTemplate.fk_to_account_id);
+            if (toAccount == null)
+            {
+                return TypedResults.NotFound("To account not found.");
+            }
+
             Transaction transaction = new Transaction()
             {
                 amount = transactionTemplate.amount,
@@ -150,31 +204,44 @@ public static class AccountingEndpoints
             };
 
             db.Transaction.Add(transaction);
+            await db.SaveChangesAsync(); // Ensure transaction.id is available
+
+            db.JournalEntry.AddRange(new List<JournalEntry>
+            {
+                new JournalEntry()
+                {
+                    amount = transactionTemplate.amount,
+                    fk_account_id = transactionTemplate.fk_from_account_id, // Main bank
+                    fk_transaction_id = transaction.id,
+                    fk_journal_entry_type = (int)JournalEntryType.Credit
+                },
+                new JournalEntry()
+                {
+                    amount = transactionTemplate.amount,
+                    fk_account_id = transactionTemplate.fk_to_account_id, // Fees
+                    fk_transaction_id = transaction.id,
+                    fk_journal_entry_type = (int)JournalEntryType.Debit
+                }
+            });
+
+            var fromAccountEntity = await db.Account.FindAsync(transactionTemplate.fk_from_account_id);
+            var toAccountEntity = await db.Account.FindAsync(transactionTemplate.fk_to_account_id);
+
+            fromAccountEntity.balance -= transactionTemplate.amount;
+            toAccountEntity.balance += transactionTemplate.amount;
+            db.Update(fromAccountEntity);
+            db.Update(toAccountEntity);
+
             await db.SaveChangesAsync();
 
-            db.JournalEntry.Add(new JournalEntry()
-            {
-                amount = transactionTemplate.amount,
-                fk_account_id = transactionTemplate.fk_from_account_id, //main bank
-                fk_transaction_id = transaction.id,
-                fk_journal_entry_type = (int)JournalEntryType.Credit
-            });
-
-            db.JournalEntry.Add(new JournalEntry()
-            {
-                amount = transactionTemplate.amount,
-                fk_account_id = transactionTemplate.fk_to_account_id, //fees TODO: get account id for fees
-                fk_transaction_id = transaction.id,
-                fk_journal_entry_type = (int)JournalEntryType.Debit
-            });
-
-            return TypedResults.Created($"/api/Finance/{transactionTemplate}", transactionTemplate);
+            return TypedResults.Created($"/api/Finance/{transaction.id}", transaction);
         })
         .WithName("RecordExpense")
         .WithOpenApi();
 
         //get expenses
-        group.MapGet("/Expense/All", async (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1) =>
+        group.MapGet("/Expense/All", async 
+            (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1) =>
         {
             var allExpensesCount = 0;
 
@@ -207,7 +274,45 @@ public static class AccountingEndpoints
         .WithOpenApi();
 
         //get revenues
+        group.MapGet("/Revenue/All", async 
+            (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1, 
+            string? account = null, DateTime? dateFrom = null, DateTime? dateTo = null) =>
+        {
+            var allExpensesCount = 0;
 
+            var query = db.Revenue
+                .AsNoTracking()
+                .OrderBy(c => c.id)
+                .AsQueryable();
+
+            // Apply filters dynamically based on the provided parameters
+            if (account is not null)
+            {
+                query = query.Where(s => s.account_number == account);
+            }
+            if (dateFrom != null || dateTo != null)
+            {
+                query = query.Where(s => s.payment_date >= dateFrom && s.payment_date <= dateTo);
+            }
+
+            // Count the total records for pagination
+            allExpensesCount = await query.CountAsync();
+
+            // Apply pagination and projection to DTO
+            var allExpenses = await query
+                .Skip(pageNumber * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Return results including pagination metadata
+            return Results.Ok(new
+            {
+                total = allExpensesCount,
+                expenseRecords = allExpenses
+            });
+        })
+        .WithName("GetRevenueRecordsPaginated")
+        .WithOpenApi();
 
     }
 
@@ -223,7 +328,9 @@ public static class AccountingEndpoints
         return account;
     }
 
-    private static async Task ProcessReceipt(Student studentDetails, Revenue revenue, ShuleOneDatabaseContext db, ILogger logger, FileGeneratorService fileGeneratorService)
+    private static async Task ProcessReceipt
+        (Student studentDetails, Revenue revenue, ShuleOneDatabaseContext db, 
+        ILogger logger, FileGeneratorService fileGeneratorService)
     {
         //create receipt record
         Receipt receipt = new Receipt
@@ -304,7 +411,9 @@ public static class AccountingEndpoints
         }
     }
 
-    private static Result<string> GenerateReceiptFile(ILogger logger, Student studentDetails, Receipt receipt, Revenue revenue, FileGeneratorService fileGeneratorService, ShuleOneDatabaseContext db)
+    private static Result<string> GenerateReceiptFile(
+        ILogger logger, Student studentDetails, Receipt receipt, 
+        Revenue revenue, FileGeneratorService fileGeneratorService, ShuleOneDatabaseContext db)
     {
         try
         {
