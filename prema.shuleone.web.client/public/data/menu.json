@@ -51,27 +51,39 @@
           }
         }
       ]
-    },    
-    {
-      "route": "employees",
-      "name": "employees",
-      "type": "link",
-      "icon": "money",
-      "permissions": {
-        "only": ["super-admin", "admin", "member"],
-        "redirectTo": "/"
-      }
-    },
+    },     
     {
       "route": "finance",
       "name": "finance",
-      "type": "link",
-      "icon": "article",
+      "type": "sub",
+      "icon": "money",
       "permissions": {
-        "only": ["super-admin", "admin", "member"],
+        "only": ["super-admin", "admin", "finance"],
         "redirectTo": "/"
-      }
-    },
+      },
+      "children": [
+        {
+          "route": "fee-received",
+          "name": "fee-received",
+          "type": "link",
+          "icon": "money",
+          "permissions": {
+            "only": ["super-admin", "admin", "finance"],
+            "redirectTo": "/"
+          }
+        },
+        {
+          "route": "expenses",
+          "name": "expenses",
+          "type": "link",
+          "icon": "money",
+          "permissions": {
+            "only": ["super-admin", "admin", "finance"],
+            "redirectTo": "/"
+          }
+        }
+      ]
+    },   
     {
       "route": "messaging/messages",
       "name": "messages",

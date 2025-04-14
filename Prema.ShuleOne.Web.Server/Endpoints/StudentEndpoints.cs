@@ -17,15 +17,35 @@ public static class StudentEndpoints
     {
         var group = routes.MapGroup("/api/Student").WithTags(nameof(Student));
 
-        group.MapGet("/All", async (ShuleOneDatabaseContext db) =>
+        group.MapGet("/All", async (ShuleOneDatabaseContext db, int grade = 0) =>
         {
-            return await db.Student
+            if (grade > 12)
+            {
+                return Results.BadRequest("Invalid grade.");
+            }
+
+            var query = db.Student
                 .Where(s => s.admission_status != AdmissionStatus.Inactive)
                 .OrderByDescending(s => s.date_of_admission)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (grade == 0)
+            {
+                var allStudents = await query.ToListAsync();
+                return Results.Ok(allStudents);
+            }
+            else
+            {
+                var filteredStudents = await query
+                    .Where(s => s.current_grade == (Grades)grade)
+                    .ToListAsync();
+
+                return Results.Ok(filteredStudents);
+            }
         })
         .WithName("GetAllStudents")
         .WithOpenApi();
+
 
         group.MapGet("/", async (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1, int admissionStatus = 0, int grade = 0) =>
         {

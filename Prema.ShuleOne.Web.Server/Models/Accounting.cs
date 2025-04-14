@@ -278,5 +278,10 @@ namespace Prema.ShuleOne.Web.Server.Models
         S3Bucket = 3
     }
 
+    public class RevenueWithStudentDto
+    {
+        public Revenue Revenue { get; set; }
+        public Student? Student { get; set; }
+    }
 
 }

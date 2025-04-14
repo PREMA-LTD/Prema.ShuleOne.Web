@@ -12,10 +12,10 @@ using Prema.ShuleOne.Web.Server.Endpoints.Reports;
 using static Prema.ShuleOne.Web.Server.Controllers.FinanceEndpint;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 using CSharpFunctionalExtensions;
-using global::Telegram.Bot.Types;
 using Microsoft.Extensions.Options;
 using Prema.ShuleOne.Web.Server.AppSettings;
 using System.Security.Cryptography.Pkcs;
+using System.Security.Principal;
 using System.Text;
 
 public static class AccountingEndpoints
@@ -30,30 +30,118 @@ public static class AccountingEndpoints
         var group = routes.MapGroup("/api/Accounting").WithTags("Accounting");
 
         //add revenue
-        group.MapPost("/Revenue", async 
+        group.MapPost("/Revenue", async
             (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
         {
-        //save revenue record
-        db.Revenue.Add(revenue);
-        await db.SaveChangesAsync();
+            //save revenue record
+            db.Revenue.Add(revenue);
+            await db.SaveChangesAsync();
 
-        //check if account number valid
-        Student studentDetails = new Student();
-        var studentDetailsResult = GetStudentDetails(db, revenue.account_number);
+            //check if account number valid
+            Student studentDetails = new Student();
+            var studentDetailsResult = GetStudentDetails(db, revenue.account_number);
 
-        if (studentDetailsResult.IsFailure)
+            if (studentDetailsResult.IsFailure)
+            {
+                logger.LogWarning(studentDetailsResult.Error);
+            }
+            else
+            {
+                studentDetails = studentDetailsResult.Value;
+
+                await ProcessReceipt(studentDetails, revenue, db, logger, fileGeneratorService);
+
+                //notify parent via sms
+                //already done on budget tracker - to be moved here later
+
+
+                //create transactions
+                //get id of default account
+                Account defaultBankAccount = GetDefaultAccountId(revenue.payment_method, db);
+                Account defaultFeeAccount = GetDefaultAccountId(PaymentMethod.InternalTransaction, db);
+                if (defaultBankAccount == null || defaultFeeAccount == null)
+                {
+                    logger.LogWarning("Default accounts not set.");
+
+                    revenue.status = RevenueStatus.TransactionPending;
+                }
+                else
+                {
+                    Transaction transaction = new Transaction()
+                    {
+                        amount = revenue.amount,
+                        description = "School Fee Paid",
+                        reference_id = revenue.payment_reference,
+                        created_by = "0",
+                        transaction_type = TransactionType.FeeReceived,
+                        fk_transaction_type_identifier = studentDetails.id,
+                    };
+
+                    db.Transaction.Add(transaction);
+                    await db.SaveChangesAsync();
+
+                    db.JournalEntry.Add(new JournalEntry()
+                    {
+                        amount = revenue.amount,
+                        fk_account_id = defaultBankAccount.id, //main bank
+                        fk_transaction_id = transaction.id,
+                        fk_journal_entry_type = (int)JournalEntryType.Debit
+                    });
+
+                    db.JournalEntry.Add(new JournalEntry()
+                    {
+                        amount = revenue.amount,
+                        fk_account_id = defaultFeeAccount.id, //fees TODO: get account id for fees
+                        fk_transaction_id = transaction.id,
+                        fk_journal_entry_type = (int)JournalEntryType.Credit
+                    });
+
+                    revenue.status = RevenueStatus.Allocated;
+                    revenue.fk_intended_account_number = studentDetails.id;
+
+                    defaultBankAccount.balance += revenue.amount;
+                    defaultFeeAccount.balance -= revenue.amount;
+                    db.Update(defaultFeeAccount);
+                    db.Update(defaultFeeAccount);
+                    await db.SaveChangesAsync();
+                }
+            }
+
+            db.Revenue.Update(revenue);
+            await db.SaveChangesAsync();
+
+            return TypedResults.Created($"/api/Finance/{revenue}", revenue);
+        })
+        .WithName("ProcessRevenueCollection")
+        .WithOpenApi();
+
+        //record manual fee payement
+        group.MapPost("/Revenue/ManualUpdate", async Task<Results<Created<RevenueWithStudentDto>, NotFound<string>>>
+            (int revenueId, int studentId, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
         {
-            logger.LogWarning(studentDetailsResult.Error);
-        }
-        else
-        {
-            studentDetails = studentDetailsResult.Value;
+
+            //check if account number valid
+            Student studentDetails = db.Student.AsNoTracking()
+                .FirstOrDefault(s => s.id == studentId);
+
+            if (studentDetails == null)
+            {
+                return TypedResults.NotFound("Student not found.");
+            }
+
+            Revenue revenue = db.Revenue.AsNoTracking()
+                .FirstOrDefault(r => r.id == revenueId);
+
+            if (revenue == null)
+            {
+                return TypedResults.NotFound("Revenue not found.");
+            }
+
 
             await ProcessReceipt(studentDetails, revenue, db, logger, fileGeneratorService);
 
             //notify parent via sms
             //already done on budget tracker - to be moved here later
-
 
             //create transactions
             //get id of default account
@@ -97,26 +185,43 @@ public static class AccountingEndpoints
                 });
 
                 revenue.status = RevenueStatus.Allocated;
-                    revenue.fk_intended_account_number = studentDetails.id;
+                revenue.fk_intended_account_number = studentDetails.id;
 
-                    defaultBankAccount.balance += revenue.amount;
-                    defaultFeeAccount.balance -= revenue.amount;
-                    db.Update(defaultFeeAccount);
-                    db.Update(defaultFeeAccount);
-                    await db.SaveChangesAsync();
+                defaultBankAccount.balance += revenue.amount;
+                defaultFeeAccount.balance -= revenue.amount;
+                db.Update(defaultFeeAccount);
+                db.Update(defaultFeeAccount);
+                await db.SaveChangesAsync();
             }
-        }
+
 
             db.Revenue.Update(revenue);
             await db.SaveChangesAsync();
 
-            return TypedResults.Created($"/api/Finance/{revenue}", revenue);
+
+            RevenueWithStudentDto revenueDetails = db.Revenue
+                .AsNoTracking()
+                .Join(
+                    db.Student,
+                    revenue => revenue.fk_intended_account_number,
+                    student => student.id,
+                    (revenue, student) => new RevenueWithStudentDto
+                    {
+                        Revenue = revenue,
+                        Student = student
+                    }
+                )
+                .Where(s => s.Revenue.id == revenue.id)
+                .OrderBy(s => s.Revenue.id)
+                .FirstOrDefault();
+
+            return TypedResults.Created($"/api/Finance", revenueDetails);
         })
-        .WithName("ProcessRevenueCollection")
+        .WithName("ProcessManualRevenueCollection")
         .WithOpenApi();
 
         //download receipt
-        group.MapGet("/Receipt/{receiptId}", async 
+        group.MapGet("/Receipt/{receiptId}", async
             (int revenueId, ShuleOneDatabaseContext db, IOptionsMonitor<ReportSettings> reportSettings, FileGeneratorService fileGeneratorService) =>
         {
             var receipt = db.Receipts.AsNoTracking().FirstOrDefault(r => r.id == revenueId);
@@ -132,18 +237,18 @@ public static class AccountingEndpoints
                 return TypedResults.NotFound("Receipt file not found.");
             }
 
-            if(receipt.file_location == null)
+            if (receipt.file_location == null)
             {
                 //generate receipt
                 var studentDetails = db.Student.AsNoTracking().FirstOrDefault(s => s.id == receipt.fk_student_id);
                 var revenue = db.Revenue.AsNoTracking().FirstOrDefault(r => r.id == receipt.fk_revenue_id);
 
-                if(studentDetails == null)
+                if (studentDetails == null)
                 {
                     return TypedResults.NotFound("Student details not found.");
                 }
 
-                if(revenue == null)
+                if (revenue == null)
                 {
                     return TypedResults.NotFound("Revenue record not found.");
                 }
@@ -157,13 +262,14 @@ public static class AccountingEndpoints
                     receipt.file_location_type = FileLocationType.Local;
                     db.Receipts.Update(receipt);
                     await db.SaveChangesAsync();
-                } else
+                }
+                else
                 {
                     return TypedResults.NotFound("Error generating receipt file.");
                 }
             }
 
-            if(receipt.file_location == null)
+            if (receipt.file_location == null)
             {
                 return TypedResults.NotFound("File not found.");
             }
@@ -176,7 +282,7 @@ public static class AccountingEndpoints
         .WithOpenApi();
 
         //add expense
-        group.MapPost("/Expense", async Task<Results<Created<Transaction>, NotFound<string>>> 
+        group.MapPost("/Expense", async Task<Results<Created<Transaction>, NotFound<string>>>
             (TransactionTemplate transactionTemplate, ShuleOneDatabaseContext db) =>
         {
             var fromAccount = await db.Account.AsNoTracking()
@@ -240,7 +346,7 @@ public static class AccountingEndpoints
         .WithOpenApi();
 
         //get expenses
-        group.MapGet("/Expense/All", async 
+        group.MapGet("/Expense/All", async
             (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1) =>
         {
             var allExpensesCount = 0;
@@ -274,32 +380,43 @@ public static class AccountingEndpoints
         .WithOpenApi();
 
         //get revenues
-        group.MapGet("/Revenue/All", async 
-            (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1, 
-            string? account = null, DateTime? dateFrom = null, DateTime? dateTo = null) =>
+        group.MapGet("/Revenue/All", async
+            (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1,
+            string? account = null, string? transactionRef = null, DateTime? dateFrom = null, DateTime? dateTo = null) =>
         {
-            var allExpensesCount = 0;
+            var allRevenueCount = 0;
 
             var query = db.Revenue
                 .AsNoTracking()
-                .OrderBy(c => c.id)
+                .GroupJoin(
+                    db.Student,
+                    revenue => revenue.fk_intended_account_number,
+                    student => student.id,
+                    (revenue, student) => new { Revenue = revenue, Student = student.First() } // Left join effect
+                )
+                .OrderBy(c => c.Revenue.id)
                 .AsQueryable();
+
 
             // Apply filters dynamically based on the provided parameters
             if (account is not null)
             {
-                query = query.Where(s => s.account_number == account);
+                query = query.Where(s => s.Revenue.account_number == account);
+            }
+            if (transactionRef is not null)
+            {
+                query = query.Where(s => s.Revenue.payment_reference == transactionRef);
             }
             if (dateFrom != null || dateTo != null)
             {
-                query = query.Where(s => s.payment_date >= dateFrom && s.payment_date <= dateTo);
+                query = query.Where(s => s.Revenue.payment_date >= dateFrom && s.Revenue.payment_date <= dateTo);
             }
 
             // Count the total records for pagination
-            allExpensesCount = await query.CountAsync();
+            allRevenueCount = await query.CountAsync();
 
             // Apply pagination and projection to DTO
-            var allExpenses = await query
+            var allRevenue = await query
                 .Skip(pageNumber * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -307,11 +424,28 @@ public static class AccountingEndpoints
             // Return results including pagination metadata
             return Results.Ok(new
             {
-                total = allExpensesCount,
-                expenseRecords = allExpenses
+                total = allRevenueCount,
+                revenueStudentRecords = allRevenue
             });
         })
         .WithName("GetRevenueRecordsPaginated")
+        .WithOpenApi();
+
+
+        group.MapGet("/CheckPayment", async (ShuleOneDatabaseContext db, string transactionReference) =>
+        {
+            var revenue = db.Revenue.AsNoTracking()
+                .Where(r => r.payment_reference == transactionReference)
+                .FirstOrDefault();
+
+            if(revenue == null)
+            {
+                return Results.Ok(false);
+            }
+
+            return Results.Ok(true);
+        })
+        .WithName("CheckPayment")
         .WithOpenApi();
 
     }
@@ -320,7 +454,7 @@ public static class AccountingEndpoints
     {
         Account account = db.Account.FirstOrDefault(a => a.default_source == paymentMethod);
 
-        if(account == null)
+        if (account == null)
         {
             return null;
         }
@@ -329,7 +463,7 @@ public static class AccountingEndpoints
     }
 
     private static async Task ProcessReceipt
-        (Student studentDetails, Revenue revenue, ShuleOneDatabaseContext db, 
+        (Student studentDetails, Revenue revenue, ShuleOneDatabaseContext db,
         ILogger logger, FileGeneratorService fileGeneratorService)
     {
         //create receipt record
@@ -412,7 +546,7 @@ public static class AccountingEndpoints
     }
 
     private static Result<string> GenerateReceiptFile(
-        ILogger logger, Student studentDetails, Receipt receipt, 
+        ILogger logger, Student studentDetails, Receipt receipt,
         Revenue revenue, FileGeneratorService fileGeneratorService, ShuleOneDatabaseContext db)
     {
         try

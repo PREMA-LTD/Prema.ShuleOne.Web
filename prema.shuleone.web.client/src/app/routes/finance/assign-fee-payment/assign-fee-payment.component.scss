@@ -1,28 +1,8 @@
-// .table-container {
-    //   display: flex;
-    //   flex-direction: column;
-    //   height: calc(100vh - 100px); // Adjust 100px based on your layout
-    //   min-height: 400px; // Set a minimum height
-    //   max-height: 800px; // Set a maximum height
-    // }
-    
-    // :host ::ng-deep .mtx-grid {
-    //   flex: 1;
-    //   overflow: auto;
-    //   min-height: 0; // This is important for flex child to respect parent's size
-    // }
-    
-    // // Media query for smaller screens
-    // @media (max-width: 768px) {
-    //   .table-container {
-    //     height: calc(100vh - 80px); // Adjust for smaller screens
-    //     min-height: 300px;
-    //   }
-    // }
+
       
     
       /* Define custom styles for the tag colors */
-    .tag-paid {
+      .tag-paid {
         background-color: green !important;
         color: white !important;
       }

@@ -84,6 +84,8 @@
     "students.student-records": "Student Records",
     "employees": "Employees",
     "finance": "Finance",
+    "finance.fee-received": "School Fees",
+    "finance.expenses": "Expenses",
     "messages": "Messages",
     "projects": "Projects"
   },

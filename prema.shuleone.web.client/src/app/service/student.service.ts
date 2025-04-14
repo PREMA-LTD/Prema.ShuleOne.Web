@@ -21,8 +21,8 @@ export class StudentService {
     return this.http.post<Student>(`${this.apiUrl}/Admit`, studentDetails).toPromise();
   }
 
-  async getAllStudents(): Promise<Observable<Student[]>> {
-    return this.http.get<Student[]>(`${this.apiUrl}/All`);
+  async getAllStudents(grade: number | undefined): Promise<Observable<Student[]>> {
+    return this.http.get<Student[]>(`${this.apiUrl}/All?grade=${grade ?? 0}`); // Pass grade as 0 if it's undefined
   }
 
   async getRecentAdmissions(): Promise<Observable<Student[]>> {

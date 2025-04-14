@@ -159,8 +159,7 @@ export class StudentsAdmissionComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result.success === true) {
-      }
+      this.getStudents();
     });
   }
 
@@ -196,8 +195,8 @@ export class StudentsAdmissionComponent implements OnInit {
         });
     
         dialogRef.afterClosed().subscribe(result => {
-          if (result.success === true) {
-          }
+          this.getStudents();
+          this.dialog.closeAll();
         });
     })
     .catch(error => {

@@ -69,6 +69,7 @@ export class AdmissionFormComponent {
   secondaryContactForm : FormGroup;
   otherForm: FormGroup;
 
+  isLoading: boolean = true;
   isSubcountyDisabled: boolean = true;
   isWardDisabled: boolean = true;
   counties: County[] = [];
@@ -228,17 +229,21 @@ export class AdmissionFormComponent {
   
   //#region "Location logic"
   async getLocation(wardId: number): Promise<LocationData | undefined> {
+    this.isLoading = true;
     this.isSubcountyDisabled = false;
     try {
       const location = await (await this.locationService.getLocation(wardId)).toPromise();
+      this.isLoading = false;
       return location;
     } catch (error) {
       console.error('Error fetching location', error);
+      this.isLoading = false;
       return undefined;
     }
   }
 
   async getCounties() {
+    this.isLoading = true;
     (await this.locationService.getCounties()).subscribe(
       (data: County[]) => {
         this.counties = data;  // Assign the data to the counties array
@@ -249,9 +254,11 @@ export class AdmissionFormComponent {
     );
     this.placeOfResidence.get('county')?.setValidators([Validators.required]);
     this.placeOfResidence.get('county')?.updateValueAndValidity();
+    this.isLoading = false;
   }
 
   async getSubcounties(countyId: number) {
+    this.isLoading = true;
     (await this.locationService.getSubcounties(countyId)).subscribe(
       (data: Subcounty[]) => {
         this.subcounties = data;  // Assign the data to the counties array
@@ -260,9 +267,11 @@ export class AdmissionFormComponent {
         console.error('Error fetching subcounties', error);
       }
     );
+    this.isLoading = false;
   }
 
   async getWards(subcountyId?: number) {
+    this.isLoading = true;
     (await this.locationService.getWards(subcountyId)).subscribe(
       (data: Ward[]) => {
         this.wards = data;  // Assign the data to the counties array
@@ -272,9 +281,11 @@ export class AdmissionFormComponent {
       }
     );
     this.placeOfResidence.get('ward')?.enable();
+    this.isLoading = false;
   }
 
   onCountyChange(countyId: number) {
+    this.isLoading = true;
     this.isSubcountyDisabled = false;
     this.getSubcounties(countyId);
     this.placeOfResidence.get('subcounty')?.setValidators([Validators.required]);
@@ -283,17 +294,21 @@ export class AdmissionFormComponent {
     this.placeOfResidence.get('ward')?.updateValueAndValidity();
     this.placeOfResidence.get('subcounty')?.enable();
     this.placeOfResidence.get('ward')?.disable();
+    this.isLoading = false;
   }
 
   onSubcountyChange(subcountyId: number) {
+    this.isLoading = true;
     this.getWards(subcountyId);
     this.placeOfResidence.get('ward')?.enable();
     this.placeOfResidence.get('ward')?.setValidators([Validators.required]);
     this.placeOfResidence.get('ward')?.updateValueAndValidity();
+    this.isLoading = false;
   }
   //#endregion
 
   async submitForm(): Promise<void> {
+    this.isLoading = true;
     if (this.studentForm.invalid || this.primaryContactForm.invalid || this.secondaryContactForm.invalid || this.otherForm.invalid) {
 
       // Mark all forms as touched to display validation errors
@@ -407,6 +422,7 @@ export class AdmissionFormComponent {
         });
     };
 
+    this.isLoading = false;
   }
 
   admitNewStudent(paymentData: any){
@@ -417,8 +433,11 @@ export class AdmissionFormComponent {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result.success === true) {
-      }
+      this.dialog.closeAll();
     });
+  }
+
+  close() {
+    this.dialog.closeAll(); 
   }
 }
