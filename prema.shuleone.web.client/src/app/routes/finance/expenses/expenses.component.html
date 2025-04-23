@@ -1,3 +1,18 @@
-<page-header></page-header>
-
-<p>expenses works!</p>
+<div class="table-container" fxLayout="column" fxLayoutAlign="center stretch">
+    <page-header class="bg-cyan-50"></page-header>
+    
+    <h1>Expense Records</h1>
+    <mtx-grid
+      fxFlex
+      [data]="expense"
+      [columns]="columns"
+      [length]="total"
+      [loading]="isLoading"
+      [pageOnFront]="false"
+      [pageIndex]="query.page"
+      [pageSize]="query.per_page"
+      [pageSizeOptions]="[5,10,20]"
+      (page)="getNextPage($event)">
+    </mtx-grid>
+  </div>
+  

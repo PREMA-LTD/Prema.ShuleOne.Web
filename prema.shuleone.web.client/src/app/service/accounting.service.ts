@@ -57,5 +57,17 @@ export class AccountingService {
     return response;
   }
   
+  async checkPaymentStatus(transactionRef: string): Promise<boolean> {
+    try {
+      const result = await this.http
+        .get<boolean>(`${this.apiUrl}/CheckPayment?transactionReference=${transactionRef}`)
+        .toPromise();
+  
+      return result ?? false; // fallback to false if result is null or undefined
+    } catch (error) {
+      console.error('Failed to check payment status:', error);
+      return false;
+    }
+  }
   
 }
