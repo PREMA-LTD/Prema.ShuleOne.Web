@@ -18,13 +18,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+// Read allowed origins from config
+var allowedOrigins = builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin",
-        builder => builder
-            .WithOrigins("https://localhost:4200", "http://localhost:4200", "https://fintrack.shangilia.africa", "http://localhost:3080", "https://lifeway.prema.co.ke") // Update this with your Angular app's URL
-            .AllowAnyHeader()
-            .AllowAnyMethod());
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        policy.WithOrigins(allowedOrigins!)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 
