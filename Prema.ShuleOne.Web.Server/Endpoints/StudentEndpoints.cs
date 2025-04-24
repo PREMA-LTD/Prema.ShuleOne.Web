@@ -31,7 +31,7 @@ public static class StudentEndpoints
 
             if (grade == 0)
             {
-                var allStudents = await query.ToListAsync();0
+                var allStudents = await query.ToListAsync();
                 return Results.Ok(allStudents);
             }
             else

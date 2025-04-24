@@ -282,18 +282,19 @@ public static class AccountingEndpoints
         .WithOpenApi();
 
         //add expense
-        group.MapPost("/Expense", async Task<Results<Created<Transaction>, NotFound<string>>>
-            (TransactionTemplate transactionTemplate, ShuleOneDatabaseContext db) =>
+        group.MapPost("/Expense", async Task<Results<Created<ExpenseDto>, NotFound<string>>>
+            (ExpenseDto expenseDto, ShuleOneDatabaseContext db, IMapper mapper) =>
         {
             var fromAccount = await db.Account.AsNoTracking()
-                .FirstOrDefaultAsync(a => a.id == transactionTemplate.fk_from_account_id);
+                .FirstOrDefaultAsync(a => a.id == expenseDto.fk_from_account_id);
+
             if (fromAccount == null)
             {
                 return TypedResults.NotFound("From account not found.");
             }
 
             var toAccount = await db.Account.AsNoTracking()
-                .FirstOrDefaultAsync(a => a.id == transactionTemplate.fk_to_account_id);
+                .FirstOrDefaultAsync(a => a.id == expenseDto.fk_to_account_id);
             if (toAccount == null)
             {
                 return TypedResults.NotFound("To account not found.");
@@ -301,46 +302,54 @@ public static class AccountingEndpoints
 
             Transaction transaction = new Transaction()
             {
-                amount = transactionTemplate.amount,
-                description = transactionTemplate.description,
-                reference_id = transactionTemplate.payment_reference,
+                amount = expenseDto.amount,
+                description = expenseDto.description,
+                reference_id = expenseDto.payment_reference,
                 created_by = "0",
                 transaction_type = TransactionType.ExpensePaid,
-                fk_transaction_type_identifier = transactionTemplate.fk_to_account_id,
+                fk_transaction_type_identifier = expenseDto.fk_to_account_id,
             };
 
             db.Transaction.Add(transaction);
             await db.SaveChangesAsync(); // Ensure transaction.id is available
 
+            expenseDto.fk_transaction_id = transaction.id;
+            Expense expense = mapper.Map<Expense>(expenseDto);
+            await db.Expenses.AddAsync(expense);
+            await db.SaveChangesAsync(); // Ensure transaction.id is available
+
+
             db.JournalEntry.AddRange(new List<JournalEntry>
             {
                 new JournalEntry()
                 {
-                    amount = transactionTemplate.amount,
-                    fk_account_id = transactionTemplate.fk_from_account_id, // Main bank
+                    amount = expenseDto.amount,
+                    fk_account_id = expenseDto.fk_from_account_id, // Main bank
                     fk_transaction_id = transaction.id,
                     fk_journal_entry_type = (int)JournalEntryType.Credit
                 },
                 new JournalEntry()
                 {
-                    amount = transactionTemplate.amount,
-                    fk_account_id = transactionTemplate.fk_to_account_id, // Fees
+                    amount = expenseDto.amount,
+                    fk_account_id = expenseDto.fk_to_account_id, // Fees
                     fk_transaction_id = transaction.id,
                     fk_journal_entry_type = (int)JournalEntryType.Debit
                 }
             });
 
-            var fromAccountEntity = await db.Account.FindAsync(transactionTemplate.fk_from_account_id);
-            var toAccountEntity = await db.Account.FindAsync(transactionTemplate.fk_to_account_id);
+   
+            var fromAccountEntity = await db.Account.FindAsync(expenseDto.fk_from_account_id);
+            var toAccountEntity = await db.Account.FindAsync(expenseDto.fk_to_account_id);
 
-            fromAccountEntity.balance -= transactionTemplate.amount;
-            toAccountEntity.balance += transactionTemplate.amount;
+            fromAccountEntity.balance -= expenseDto.amount;
+            toAccountEntity.balance += expenseDto.amount;
             db.Update(fromAccountEntity);
             db.Update(toAccountEntity);
 
             await db.SaveChangesAsync();
 
-            return TypedResults.Created($"/api/Finance/{transaction.id}", transaction);
+            expenseDto = mapper.Map<ExpenseDto>(expense);
+            return TypedResults.Created($"/api/Finance/{expenseDto.id}", expenseDto);
         })
         .WithName("RecordExpense")
         .WithOpenApi();
@@ -351,9 +360,8 @@ public static class AccountingEndpoints
         {
             var allExpensesCount = 0;
 
-            var query = db.Transaction
+            var query = db.Expenses
                 .AsNoTracking()
-                .Where(c => c.transaction_type == TransactionType.ExpensePaid)
                 .OrderBy(c => c.id)
                 .AsQueryable();
 
@@ -373,7 +381,7 @@ public static class AccountingEndpoints
             return Results.Ok(new
             {
                 total = allExpensesCount,
-                expenseRecords = allExpenses
+                expenses = allExpenses
             });
         })
         .WithName("GetExpenseRecordsPaginated")

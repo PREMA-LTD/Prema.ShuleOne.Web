@@ -6,7 +6,7 @@ import { KeycloakService } from 'keycloak-angular';
 import { KeycloakProfile } from 'keycloak-js';
 import { Student } from 'app/models/student.model';
 import { TransactionResult } from 'app/models/transansaction.model';
-import { RevenueStudentRecord, RevenueStudentRecordsPagination } from 'app/models/finance.model';
+import { ExpensePagination, RevenueStudentRecord, RevenueStudentRecordsPagination } from 'app/models/finance.model';
 
 
 @Injectable({
@@ -68,6 +68,12 @@ export class AccountingService {
       console.error('Failed to check payment status:', error);
       return false;
     }
+  }
+
+  async getAllExpensesPaginated(page: number, perPage: number): Promise<Observable<ExpensePagination>> {
+    // if(this.keycloakService.isUserInRole("super-admin") || this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("finance")){
+      return this.http.get<ExpensePagination>(`${this.apiUrl}/Expense/All?pageNumber=${page}&pageSize=${perPage}`);
+    // }
   }
   
 }

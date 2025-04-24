@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prema.ShuleOne.Web.Server.Database;
 
@@ -11,9 +12,11 @@ using Prema.ShuleOne.Web.Server.Database;
 namespace Prema.Services.ShuleOneDbManager.Migrations
 {
     [DbContext(typeof(ShuleOneDatabaseContext))]
-    partial class ShuleOneDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250424192707_AddedExpenses")]
+    partial class AddedExpenses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -225,10 +228,7 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
             modelBuilder.Entity("Prema.ShuleOne.Web.Server.Models.Expense", b =>
                 {
                     b.Property<int>("id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id"));
 
                     b.Property<decimal>("amount")
                         .HasColumnType("decimal(65,30)");

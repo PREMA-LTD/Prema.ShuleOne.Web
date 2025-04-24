@@ -7,23 +7,27 @@ import { finalize } from 'rxjs';
 import { Student } from 'app/models/student.model';
 import { KeycloakService } from 'keycloak-angular';
 import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/mpesa-stk-push.component';
+import { Expense } from 'app/models/finance.model';
+import { FinanceService } from 'app/service/finance.service';
+import { AccountingService } from 'app/service/accounting.service';
 
 @Component({
   selector: 'app-finance-expenses',
   templateUrl: './expenses.component.html',
-  styleUrl: './expenses.component.css'
+  styleUrl: './expenses.component.scss'
 })
 export class FinanceExpensesComponent implements OnInit {
 
   constructor(public dialog: MatDialog) {}
 
-  private readonly studentService = inject(StudentService);
+  private readonly accountingService = inject(AccountingService);
   private readonly keycloakService = inject(KeycloakService);
 
   columns: MtxGridColumn[] = [
-    { header: 'Admission No', field: 'id' },
-    { header: 'Surname', field: 'surname' },
-    { header: 'Other Names', field: 'other_names' },
+    { header: 'Id', field: 'id' },
+    { header: 'Amount', field: 'amount' },
+    { header: 'Payment Ref', field: 'payment_reference' },
+    { header: 'Date Paid', field: 'date_paid' },
     {
       header: 'Action',
       field: 'action',
@@ -34,7 +38,7 @@ export class FinanceExpensesComponent implements OnInit {
           color: 'primary',
           icon: 'phone',
           // iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
-          click: (record: any) => this.openContactInfo(record)
+          click: (record: any) => this.viewExpenseDetails(record)
         }  
       ]
     }
@@ -42,7 +46,7 @@ export class FinanceExpensesComponent implements OnInit {
 
   //#region Table Functions
 
-  students: Expense[] = [];
+  expenses: Expense[] = [];
   total = 0;
   isLoading = true;
 
@@ -84,15 +88,15 @@ export class FinanceExpensesComponent implements OnInit {
   async getStudents() {
     this.isLoading = true;
     
-    (await this.studentService
-      .getStudentsPaginated(this.query.page, this.query.per_page, this.query.admissionStatus, this.query.grade))
+    (await this.accountingService
+      .getAllExpensesPaginated(this.query.page, this.query.per_page))
       .pipe(
         finalize(() => {
           this.isLoading = false;
         })
       )
       .subscribe(res => {
-        this.students = res.students;
+        this.expenses = res.expenses;
         this.total = res.total;
         this.isLoading = false;
       });
@@ -107,20 +111,8 @@ export class FinanceExpensesComponent implements OnInit {
     await this.getStudents();
   }
 
-  openContactInfo(studentRecord: any): void {
-    const dialogRef = this.dialog.open(ContactInfoComponent, {
-      width: '400px',
-      data: { 
-        studentRecord
-      }
-    });
+  viewExpenseDetails(expense: Expense): void {
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result.success === true) {
-        // Refresh the table after a successful payment
-
-      }
-    });
   }  
 
 }

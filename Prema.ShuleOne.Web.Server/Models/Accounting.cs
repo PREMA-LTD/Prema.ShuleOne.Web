@@ -173,7 +173,8 @@ namespace Prema.ShuleOne.Web.Server.Models
         InternalTransaction = 3
     }
 
-    public class TransactionTemplate
+    [Table("expense")]
+    public class Expense : BaseType
     {
         public string description { get; set; }
         public decimal amount { get; set; }
@@ -181,27 +182,33 @@ namespace Prema.ShuleOne.Web.Server.Models
         public string payment_reference { get; set; }
         public int fk_from_account_id { get; set; }
         public int fk_to_account_id { get; set; }
+        public int? fk_transaction_id { get; set; }
         public string paid_by { get; set; }
         public DateTime date_paid { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
-    }
-
-    [Table("expense_types")]
-    public class ExpenseType : BaseTypeNoTracking
-    {
-        [Required]
-        public string description { get; set; }
-        public int fk_from_account_id { get; set; }
-        public int fk_to_account_id { get; set; }
-        [Required]
-        public string added_by { get; set; }
-        public DateTime date_created { get; set; } = DateTime.UtcNow;
+        public string reciept { get; set; }
+        [ForeignKey("fk_transaction_id")]
+        public Transaction Transaction { get; set; }
         [ForeignKey("fk_from_account_id")]
         public Account FromAccount { get; set; }
         [ForeignKey("fk_to_account_id")]
         public Account ToAccount { get; set; }
     }
-   
+
+    public class ExpenseDto : BaseType
+    {
+        public string description { get; set; }
+        public decimal amount { get; set; }
+        public string category { get; set; }
+        public string payment_reference { get; set; }
+        public int fk_from_account_id { get; set; }
+        public int fk_to_account_id { get; set; }
+        public int? fk_transaction_id { get; set; }
+        public string paid_by { get; set; }
+        public DateTime date_paid { get; set; }
+        public DateTime date_created { get; set; } = DateTime.UtcNow;
+        public string reciept { get; set; }
+    }
 
 
     [Table("receipt")]

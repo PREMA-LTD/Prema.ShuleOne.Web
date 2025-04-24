@@ -68,7 +68,7 @@ namespace Prema.ShuleOne.Web.Server.Database
         public DbSet<RevenueStatuses> RevenueStatuses { get; set; }
         public DbSet<ReceiptStatuses> ReceiptStatuses { get; set; }
         public DbSet<TransactionTypes> TransactionTypes { get; set; }
-        public DbSet<ExpenseType> ExpenseTypes { get; set; }
+        public DbSet<Expense> Expenses { get; set; }
         public DbSet<AccountCategories> AccountCategories { get; set; }
     }
 }

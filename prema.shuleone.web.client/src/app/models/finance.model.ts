@@ -23,3 +23,23 @@ interface Revenue {
     total: number;
     revenueStudentRecords: RevenueStudentRecord[];
   }
+
+  export interface Expense {
+    id?: number; // Assuming BaseTypeNoTracking includes an id
+    description: string;
+    amount: number; // decimal in C# maps to number in TypeScript
+    category: string;
+    payment_reference: string;
+    fk_from_account_id: number;
+    fk_to_account_id: number;
+    fk_transaction_id?: number; // nullable in C#, optional in TypeScript
+    paid_by: string;
+    date_paid: Date;
+    date_created: Date;
+    reciept: string;
+  }
+
+  export interface ExpensePagination {
+    total: number;
+    expenses: Expense[];
+  }
