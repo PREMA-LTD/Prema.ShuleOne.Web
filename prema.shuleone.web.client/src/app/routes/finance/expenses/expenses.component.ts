@@ -34,7 +34,7 @@ export class FinanceExpensesComponent implements OnInit {
       type: 'button',
       buttons: [    
         {
-          text: 'View Contact',
+          text: 'View Details',
           color: 'primary',
           icon: 'phone',
           // iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),

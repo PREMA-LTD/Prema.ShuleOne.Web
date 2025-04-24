@@ -9,15 +9,16 @@ import { StudentService } from 'app/service/student.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/mpesa-stk-push.component';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { Expense } from 'app/models/finance.model';
 
 
 @Component({
-    selector: 'app-contact-info',
-    templateUrl: './contact-info.component.html',
-    styleUrls: ['./contact-info.component.scss']
+    selector: 'app-expense-details',
+    templateUrl: './expense-details.component.html',
+    styleUrls: ['./expense-details.component.scss']
 })
 
-export class ContactInfoComponent {
+export class ExpenseDetailsComponent {
 
     private readonly locationService = inject(LocationService);
     private readonly studentService = inject(StudentService);
@@ -28,7 +29,7 @@ export class ContactInfoComponent {
 
     hasSecondaryContact = false;
 
-    studentContact: Contact[] | undefined;
+    studentContact: Expense[] | undefined;
 
     constructor(
         public dialogRef: MatDialogRef<FinanceMpesaStkPushComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {
