@@ -10,6 +10,8 @@ import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/
 import { Expense } from 'app/models/finance.model';
 import { FinanceService } from 'app/service/finance.service';
 import { AccountingService } from 'app/service/accounting.service';
+import { ExpenseDetailsComponent } from './expense_details/expense-details.component';
+import { AddExpenseComponent } from './add_expense/add-expense.component';
 
 @Component({
   selector: 'app-finance-expenses',
@@ -38,7 +40,7 @@ export class FinanceExpensesComponent implements OnInit {
           color: 'primary',
           icon: 'phone',
           // iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
-          click: (record: any) => this.viewExpenseDetails(record)
+          click: (record: any) => this.openExpenseDetails(record)
         }  
       ]
     }
@@ -101,18 +103,47 @@ export class FinanceExpensesComponent implements OnInit {
         this.isLoading = false;
       });
   }
-
-
-
+  
 //#endregion
+
+
+  openExpenseDetails(expenseDetails: Expense): void {
+    const dialogRef = this.dialog.open(ExpenseDetailsComponent, {
+      width: '400px',
+      data: { 
+        expenseDetails
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result.success === true) {
+        // Refresh the table after a successful payment
+
+      }
+    });
+  }  
+
+
+  openNewExpense() {
+    const dialogRef = this.dialog.open(AddExpenseComponent, {
+      width: '400px',
+      data: { 
+        expenseDetails: null
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result.success === true) {
+        // Refresh the table after a successful payment
+
+      }
+    });
+  }
 
   async ngOnInit() {
     console.log("on init")
     await this.getStudents();
   }
 
-  viewExpenseDetails(expense: Expense): void {
-
-  }  
 
 }

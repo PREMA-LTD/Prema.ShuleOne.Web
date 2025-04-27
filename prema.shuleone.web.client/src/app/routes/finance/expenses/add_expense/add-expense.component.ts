@@ -13,28 +13,62 @@ import { Expense } from 'app/models/finance.model';
 
 
 @Component({
-    selector: 'app-expense-details',
-    templateUrl: './expense-details.component.html',
-    styleUrls: ['./expense-details.component.scss']
+    selector: 'app-add-expense',
+    templateUrl: './add-expense.component.html',
+    styleUrls: ['./add-expense.component.scss']
 })
 
-export class ExpenseDetailsComponent {
+export class AddExpenseComponent {
 
     private readonly locationService = inject(LocationService);
     private readonly studentService = inject(StudentService);
     private readonly keycloakService = inject(KeycloakService);
 
-    expenseDetails: Expense;
+    expense: any = {
+        description: '',
+        amount: null,
+        payment_reference: '',
+        date_paid: '',
+        reciept: null
+      };
 
     hasSecondaryContact = false;
-
     studentContact: Expense[] | undefined;
+    selectedFile: File | null = null;
+
 
     constructor(
-        public dialogRef: MatDialogRef<FinanceMpesaStkPushComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {
-        this.expenseDetails = data.expenseDetails;
+        public dialogRef: MatDialogRef<AddExpenseComponent>) {
     }
 
+    onFileSelected(event: any) {
+      const file = event.target.files[0];
+      if (file) {
+        this.selectedFile = file;
+        // You can also preview if it's an image
+        console.log('Selected file:', file);
+      }
+    }
+  
+    onSubmit() {
+      const formData = new FormData();
+      formData.append('description', this.expense.description);
+      formData.append('amount', this.expense.amount);
+      formData.append('payment_reference', this.expense.payment_reference);
+      formData.append('date_paid', this.expense.date_paid);
+      if (this.selectedFile) {
+        formData.append('reciept', this.selectedFile);
+      }
+  
+      // TODO: send formData to your API
+      console.log('Submitting expense:', formData);
+  
+      // Example: this.expenseService.createExpense(formData).subscribe(...)
+    }
+  
+    cancel() {
+      // Navigate away or reset form
+    }
     async ngOnInit() {
 
 

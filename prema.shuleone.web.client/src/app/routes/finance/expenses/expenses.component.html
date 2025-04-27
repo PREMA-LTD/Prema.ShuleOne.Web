@@ -1,18 +1,29 @@
-<div class="table-container" fxLayout="column" fxLayoutAlign="center stretch">
-    <page-header class="bg-cyan-50"></page-header>
-    
-    <h1>Expense Records</h1>
-    <mtx-grid
-      fxFlex
-      [data]="expenses"
-      [columns]="columns"
-      [length]="total"
-      [loading]="isLoading"
-      [pageOnFront]="false"
-      [pageIndex]="query.page"
-      [pageSize]="query.per_page"
-      [pageSizeOptions]="[5,10,20]"
-      (page)="getNextPage($event)">
-    </mtx-grid>
+<div class="table-container">
+  <page-header class="bg-cyan-50"></page-header>
+
+  <div class="header-row" style="display: table; width: 100%; margin-bottom: 16px;">
+    <!-- Left column: Title -->
+    <div style="display: table-cell; vertical-align: middle;">
+      <h1 style="margin: 0;">Expense Records</h1>
+    </div>
+
+    <!-- Right column: Button -->
+    <div style="display: table-cell; text-align: right; vertical-align: middle;">
+      <button mat-flat-button color="primary" (click)="openNewExpense()">
+        <mat-icon>add</mat-icon> New Expense
+      </button>
+    </div>
   </div>
-  
+
+  <mtx-grid
+    [data]="expenses"
+    [columns]="columns"
+    [length]="total"
+    [loading]="isLoading"
+    [pageOnFront]="false"
+    [pageIndex]="query.page"
+    [pageSize]="query.per_page"
+    [pageSizeOptions]="[5,10,20]"
+    (page)="getNextPage($event)">
+  </mtx-grid>
+</div>

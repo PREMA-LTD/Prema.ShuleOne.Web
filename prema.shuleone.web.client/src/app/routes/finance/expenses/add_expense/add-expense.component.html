@@ -1,0 +1,49 @@
+<form (ngSubmit)="onSubmit()" #expenseForm="ngForm" enctype="multipart/form-data" style="padding: 16px;">
+  <mat-card style="padding: 16px;">
+    <mat-card-title>Add New Expense</mat-card-title>
+    <mat-card-content style="padding: 16px;">
+      <div class="form-group">
+
+        <!-- Description -->
+        <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+          <mat-label>Description</mat-label>
+          <input matInput name="description" [(ngModel)]="expense.description" required />
+        </mat-form-field>
+
+        <!-- Amount -->
+        <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+          <mat-label>Amount</mat-label>
+          <input matInput type="number" name="amount" [(ngModel)]="expense.amount" required />
+        </mat-form-field>
+
+        <!-- Payment Reference -->
+        <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+          <mat-label>Payment Reference</mat-label>
+          <input matInput name="payment_reference" [(ngModel)]="expense.payment_reference" required />
+        </mat-form-field>
+
+        <!-- Date Paid -->
+        <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+          <mat-label>Date Paid</mat-label>
+          <input matInput [matDatepicker]="picker" name="date_paid" [(ngModel)]="expense.date_paid" required />
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Receipt Upload -->
+        <div style="margin-top: 16px; margin-bottom: 16px;">
+          <label for="file" style="display: block;">Receipt (Image, PDF, or DOC):</label>
+          <input type="file" id="file" (change)="onFileSelected($event)" accept="image/*,.pdf,.doc,.docx" />
+        </div>
+
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions style="padding-top: 16px;">
+      <button mat-flat-button color="primary" type="submit" [disabled]="expenseForm.invalid" style="margin-right: 8px;">
+        Save Expense
+      </button>
+      <button mat-button type="button" (click)="cancel()">Cancel</button>
+    </mat-card-actions>
+  </mat-card>
+</form>
