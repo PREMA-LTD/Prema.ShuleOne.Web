@@ -32,5 +32,4 @@ export class FinanceService {
     return this.http.get<TransactionResult>(`https://www.prema.co.ke/api/Transactions/TransactionStatus?transactionId=${transactionId}`).toPromise();
   }
   
-
 }

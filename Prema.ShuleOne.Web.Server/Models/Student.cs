@@ -1,5 +1,6 @@
 ﻿using Prema.ShuleOne.Web.Server.Models.BaseEntities;
 using Prema.ShuleOne.Web.Server.Models.Enum;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Prema.ShuleOne.Web.Server.Models
@@ -37,5 +38,23 @@ namespace Prema.ShuleOne.Web.Server.Models
         Admitted = 2,
         Transfered = 3,
         Inactive = 4
+    }
+
+    [Table("admission_letter")]
+    public class AdmissionLetter 
+    {
+
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int id { get; set; }
+        public int fk_student_id { get; set; }
+        public string file_name { get; set; }
+        public string file_location { get; set; }
+        public DateTime date_created { get; set; }
+        public DateTime date_updated { get; set; }
+        public string fk_created_by { get; set; } //fk from auth server
+
+        [ForeignKey("fk_student_id")]
+        public Student Student { get; set; }
     }
 }

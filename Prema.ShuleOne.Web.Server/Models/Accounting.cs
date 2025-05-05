@@ -174,15 +174,18 @@ namespace Prema.ShuleOne.Web.Server.Models
     }
 
     [Table("expense")]
-    public class Expense : BaseType
+    public class Expense
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int id { get; set; }
         public string description { get; set; }
         public decimal amount { get; set; }
-        public string category { get; set; }
         public string payment_reference { get; set; }
         public int fk_from_account_id { get; set; }
         public int fk_to_account_id { get; set; }
         public int? fk_transaction_id { get; set; }
+        public int? fk_expense_subcategory_id { get; set; }
         public string paid_by { get; set; }
         public DateTime date_paid { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
@@ -193,23 +196,62 @@ namespace Prema.ShuleOne.Web.Server.Models
         public Account FromAccount { get; set; }
         [ForeignKey("fk_to_account_id")]
         public Account ToAccount { get; set; }
+        [ForeignKey("fk_expense_subcategory_id")]
+        public ExpenseSubCategory ExpenseCategories { get; set; }
     }
 
     public class ExpenseDto : BaseType
     {
         public string description { get; set; }
         public decimal amount { get; set; }
-        public string category { get; set; }
         public string payment_reference { get; set; }
         public int fk_from_account_id { get; set; }
         public int fk_to_account_id { get; set; }
         public int? fk_transaction_id { get; set; }
+        public int? fk_expense_subcategory_id { get; set; }
         public string paid_by { get; set; }
         public DateTime date_paid { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
-        public string reciept { get; set; }
+        public IFormFile reciept { get; set; }
     }
 
+
+    [Table("expense_category")]
+    public class ExpenseCategory : BaseType
+    {
+        public int? fk_account_id { get; set; }
+
+        [ForeignKey("fk_account_id")]
+        public Account ToAccount { get; set; }
+
+        public List<ExpenseSubCategory> ExpenseSubCategories { get; set; }
+    }
+
+
+    [Table("expense_subcategory")]
+    public class ExpenseSubCategory : BaseType
+    {
+        public int? fk_expense_category_id { get; set; }
+
+        [ForeignKey("fk_expense_category_id")]
+        public ExpenseCategory ExpenseCategories { get; set; }
+    }
+
+    public class ExpenseCategoryDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+
+        public List<ExpenseSubCategoryDto> ExpenseSubCategories { get; set; }
+    }
+
+    public class ExpenseSubCategoryDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+
+        // No reference back to ExpenseCategory — avoids circular JSON
+    }
 
     [Table("receipt")]
     public class Receipt

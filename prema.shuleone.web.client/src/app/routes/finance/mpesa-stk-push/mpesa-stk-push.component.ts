@@ -122,7 +122,7 @@ export class FinanceMpesaStkPushComponent implements OnInit {
           verticalPosition: 'top',
           duration: 10 * 1000,
         });        
-        this.dialogRef.close();        
+        this.dialogRef.close(response);        
       } else {
         this.paymentReceived = false;
         this._snackBar.open('Mpesa payment not recieved.', 'Ok', {

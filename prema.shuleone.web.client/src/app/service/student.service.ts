@@ -37,12 +37,52 @@ export class StudentService {
     return this.http.get<Contact[]>(`${this.apiUrl}/Contact/${id}`);
   }
 
-
-
   async getStudentsPaginated(page: number, perPage: number, admissionStatus: number, grade: number = 0): Promise<Observable<StudentPagination>> {
     // if(this.keycloakService.isUserInRole("super-admin") || this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("finance")){
       return this.http.get<StudentPagination>(`${this.apiUrl}?pageNumber=${page}&pageSize=${perPage}&admissionStatus=${admissionStatus}&grade=${grade}`);
     // }
   }
-
+  
+  async updateAdmissionStatus(admissionNumber: number): Promise<void> {
+    try {
+      await this.http
+        .put<void>(`${this.apiUrl}/Admissions/UpdateStatus?admissionNumber=${admissionNumber}`, {})
+        .toPromise();
+      console.log('Update successful');
+    } catch (error) {
+      console.error('Update failed:', error);
+    }
+  }
+  
+  async downloadAdmissionLetter(admissionNumber: number): Promise<void> {
+    await this.http.get(`${this.apiUrl}/Admission?admissionNumber=${admissionNumber}`, {
+      responseType: 'blob',
+      observe: 'response'
+    }).subscribe(response => {
+      const blob = new Blob([response.body!], { type: 'application/pdf' });
+  
+      // Extract filename from content-disposition header
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = admissionNumber + '_AdmissionLetter.pdf';
+  
+      if (contentDisposition) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+  
+      // Create a temporary anchor element and trigger download
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+  
+      // Cleanup
+      window.URL.revokeObjectURL(link.href);
+    }, error => {
+      console.error('Download failed:', error);
+    });
+  }
+  
 }

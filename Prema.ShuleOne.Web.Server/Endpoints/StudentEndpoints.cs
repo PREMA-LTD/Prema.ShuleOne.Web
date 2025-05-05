@@ -9,6 +9,8 @@ using AutoMapper;
 using AutoMapper.Execution;
 using Newtonsoft.Json.Linq;
 using Prema.ShuleOne.Web.Server.Endpoints.Reports;
+using Microsoft.Extensions.Options;
+using Prema.ShuleOne.Web.Server.AppSettings;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 
 public static class StudentEndpoints
@@ -114,6 +116,34 @@ public static class StudentEndpoints
         .WithName("GetAdmissions")
         .WithOpenApi();
 
+        group.MapPut("/Admissions/UpdateStatus", async (ShuleOneDatabaseContext db, IBulkSms mobileSasa, int admissionNumber) =>
+        {
+            Student student = await db.Student
+                .Where(s => s.id == admissionNumber)
+                .FirstAsync();
+
+            StudentContact primaryContact = await db.StudentContact
+                .Where(sc => sc.fk_student_id == student.id)
+                .OrderBy(sc => sc.contact_priority)
+                .FirstAsync();
+
+            student.admission_status = AdmissionStatus.Admitted;
+
+            await db.SaveChangesAsync();
+            //send message to parent/ guardian
+            string parentName = $"{primaryContact.other_names} {primaryContact.surname}";
+            string childName = $"{student.other_names} {student.surname}";
+            string message = $"Dear {parentName}, your child, {childName}, has been admitted to Lifeway Christian School. Admission No: {student.id}. Welcome to an exciting learning journey with us!";
+
+
+            await mobileSasa.SendSms(primaryContact.phone_number, parentName, message);
+
+            return TypedResults.Ok(student);
+
+        })
+        .WithName("UpdateAdmissionStatus")
+        .WithOpenApi();
+
         group.MapGet("/{id}", async Task<Results<Ok<Student>, NotFound>> (int id, ShuleOneDatabaseContext db) =>
         {
             return await db.Student.AsNoTracking()
@@ -174,7 +204,7 @@ public static class StudentEndpoints
         .WithName("CreateStudent")
         .WithOpenApi();
 
-        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa, FileGeneratorService fileGeneratorService) =>
+        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa, FileGeneratorService fileGeneratorService, IOptionsMonitor<ReportSettings> reportSettings) =>
         {
             DateTime currentDateTime = DateTime.UtcNow;
             Student student = new Student()
@@ -253,11 +283,11 @@ public static class StudentEndpoints
                 StudentFirstName = student.surname,
                 Grade = student.current_grade.ToString(),
                 AdmissionNumber = student.id.ToString(),
-                SchoolContactNumber = "0712290257",
+                SchoolContactNumber = "0746974206",
                 EmailAddress = "info@lifway.co.ke",
-                HeadteacherName = "Mr. Bett",
-                HeadteacherContact = "0712290257",
-                HeadteacherSign = "https://files.prema.co.ke/enock_signature.jpg"
+                HeadteacherName = "Mr. Teleu",
+                HeadteacherContact = "0746974206",
+                HeadteacherSign = "" // "https://files.prema.co.ke/enock_signature.jpg"
             };
 
             string fileName = $"{admissionLetterDetails.AdmissionNumber} - {admissionLetterDetails.StudentOtherNames} {admissionLetterDetails.StudentFirstName}_AdmissionLetter{DateTime.UtcNow.ToString("ddMMyyHHmmss")}.pdf";
@@ -266,13 +296,21 @@ public static class StudentEndpoints
             JObject reportDetails = JObject.FromObject(admissionLetterDetails);
             await fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
 
-            //send message to parent/guardian
-            //string parentName = $"{primaryContact.other_names} {primaryContact.surname}";
-            //string childName = $"{student.other_names} {student.surname}";
-            //string message = $"Dear {parentName}, your child, {childName}, has been admitted to Lifeway Christian School. Admission No: {student.id}. Welcome to an exciting learning journey with us!";
+            string storageBasePath = reportSettings.CurrentValue.FileStoragePath;
+            outputFilePath = $"{storageBasePath}{outputFilePath}";
 
+            AdmissionLetter admissionLetter = new AdmissionLetter()
+            {
+                fk_student_id = student.id,
+                file_name = fileName,
+                file_location = outputFilePath,
+                date_created = currentDateTime,
+                date_updated = currentDateTime,
+                fk_created_by = student.fk_created_by
+            };
 
-            //await mobileSasa.SendSms(primaryContact.phone_number, parentName, message);
+            await db.AdmissionLetter.AddAsync(admissionLetter);
+            await db.SaveChangesAsync();
 
             return TypedResults.Created($"/api/Student/{student.id}", student);
         })
@@ -288,5 +326,38 @@ public static class StudentEndpoints
         })
         .WithName("DeleteStudent")
         .WithOpenApi();
+
+        group.MapGet("/Admission/", async
+            (int admissionNumber, ShuleOneDatabaseContext db, IOptionsMonitor<ReportSettings> reportSettings) =>
+        {
+
+            Student student = await db.Student
+                .Where(s => s.id == admissionNumber)
+                .FirstAsync();
+
+            if (student == null)
+            {
+                return Results.NotFound("Student not found.");
+            }
+
+            AdmissionLetter admissionLetter = await db.AdmissionLetter
+                .Where(r => r.fk_student_id == student.id)
+                .OrderByDescending(r => r.date_created)
+                .FirstOrDefaultAsync();
+
+            if (admissionLetter == null)
+            {
+                return Results.NotFound("Admission letter not found.");
+            }
+
+            var filePath = Path.Combine(reportSettings.CurrentValue.FileStoragePath, admissionLetter.file_location);
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            return Results.File(fileStream, "application/pdf", Path.GetFileName(admissionLetter.file_location));
+        })
+        .WithName("GetAdmissionLetter")
+        .WithOpenApi();
+
     }
+
+
 }

@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { KeycloakService } from 'keycloak-angular';
 import { KeycloakProfile } from 'keycloak-js';
 import { Student } from 'app/models/student.model';
 import { TransactionResult } from 'app/models/transansaction.model';
-import { ExpensePagination, RevenueStudentRecord, RevenueStudentRecordsPagination } from 'app/models/finance.model';
+import { ExpenseCategoryDto, ExpenseDto, ExpensePagination, RevenueStudentRecord, RevenueStudentRecordsPagination } from 'app/models/finance.model';
 
 
 @Injectable({
@@ -14,11 +14,24 @@ import { ExpensePagination, RevenueStudentRecord, RevenueStudentRecordsPaginatio
 })
 
 export class AccountingService {
+
   private readonly keycloakService = inject(KeycloakService);
   private apiUrl = environment.apiUrl + '/Accounting';
 
   constructor(private http: HttpClient) {}
 
+  private getAntiForgeryToken(): string {
+    const cookieName = '.AspNetCore.Antiforgery.';
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const trimmedCookie = cookie.trim();
+      if (trimmedCookie.startsWith(cookieName)) {
+        return trimmedCookie.substring(cookieName.length + 1);
+      }
+    }
+    return '';
+  }
+  
   async getRevenuePaginated(page: number, perPage: number, account: number | undefined | null = null, transactionRef: string | undefined | null, dateFrom: Date | undefined | null = null, dateTo: | undefined | null = null): Promise<Observable<RevenueStudentRecordsPagination>> {
     // if(this.keycloakService.isUserInRole("super-admin") || this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("finance")){
     let parameters = ``;
@@ -57,13 +70,13 @@ export class AccountingService {
     return response;
   }
   
-  async checkPaymentStatus(transactionRef: string): Promise<boolean> {
+  async checkPaymentStatus(transactionRef: boolean): Promise<boolean> {
     try {
       const result = await this.http
-        .get<boolean>(`${this.apiUrl}/CheckPayment?transactionReference=${transactionRef}`)
+        .get<{ status: boolean }>(`${this.apiUrl}/CheckPayment?transactionReference=${transactionRef}`)
         .toPromise();
   
-      return result ?? false; // fallback to false if result is null or undefined
+        return result?.status ?? false; // fallback to false if result is null or undefined
     } catch (error) {
       console.error('Failed to check payment status:', error);
       return false;
@@ -76,4 +89,37 @@ export class AccountingService {
     // }
   }
   
+  async createExpense(formData: FormData) {
+    return this.http.post<ExpenseDto>(`${this.apiUrl}/Expense`, formData)
+      .pipe(
+        catchError(error => {
+          console.error('Error creating expense:', error);
+          return throwError(() => new Error('Failed to create expense'));
+        })
+      ).toPromise();
+  }
+
+  
+  async getExpenseCategories(): Promise<Observable<ExpenseCategoryDto[]>> {
+      return this.http.get<ExpenseCategoryDto[]>(`${this.apiUrl}/Expense/Categories`);
+  }
+  
+  // createExpense(formData: FormData): Observable<ExpenseDto> {
+  //   // Get the anti-forgery token from the cookie (if available)
+  //   const token = this.getAntiForgeryToken();
+    
+  //   // Create headers with the anti-forgery token
+  //   const headers = new HttpHeaders({
+  //     'X-XSRF-TOKEN': token
+  //   });
+
+  //   // Send the request with headers
+  //   return this.http.post<ExpenseDto>(`${this.apiUrl}/Expense`, formData, { headers })
+  //     .pipe(
+  //       catchError(error => {
+  //         console.error('Error creating expense:', error);
+  //         return throwError(() => new Error('Failed to create expense'));
+  //       })
+  //     );
+  // }
 }

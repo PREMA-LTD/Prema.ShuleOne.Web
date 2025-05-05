@@ -71,12 +71,12 @@ export class FinanceExpensesComponent implements OnInit {
   getNextPage(e: PageEvent) {
     this.query.page = e.pageIndex;
     this.query.per_page = e.pageSize;
-    this.getStudents();
+    this.getExpenses();
   }
 
   search() {
     this.query.page = 0;
-    this.getStudents();
+    this.getExpenses();
     console.log("query", JSON.stringify(this.query))
   }
 
@@ -84,10 +84,10 @@ export class FinanceExpensesComponent implements OnInit {
     this.query.page = 0;
     this.query.per_page = 10;
     this.query.grade = 0;
-    this.getStudents();
+    this.getExpenses();
   }
   
-  async getStudents() {
+  async getExpenses() {
     this.isLoading = true;
     
     (await this.accountingService
@@ -135,6 +135,7 @@ export class FinanceExpensesComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result.success === true) {
         // Refresh the table after a successful payment
+        this.getExpenses();
 
       }
     });
@@ -142,7 +143,7 @@ export class FinanceExpensesComponent implements OnInit {
 
   async ngOnInit() {
     console.log("on init")
-    await this.getStudents();
+    this.getExpenses();
   }
 
 

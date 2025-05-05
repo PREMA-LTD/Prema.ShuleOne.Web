@@ -12,10 +12,12 @@ using Prema.ShuleOne.Web.Server.Endpoints.Reports;
 using static Prema.ShuleOne.Web.Server.Controllers.FinanceEndpint;
 namespace Prema.ShuleOne.Web.Server.Endpoints;
 using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Prema.ShuleOne.Web.Server.AppSettings;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Principal;
+using Microsoft.AspNetCore.Antiforgery;
 using System.Text;
 
 public static class AccountingEndpoints
@@ -30,8 +32,7 @@ public static class AccountingEndpoints
         var group = routes.MapGroup("/api/Accounting").WithTags("Accounting");
 
         //add revenue
-        group.MapPost("/Revenue", async
-            (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
+        group.MapPost("/Revenue", async (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
         {
             //save revenue record
             db.Revenue.Add(revenue);
@@ -283,8 +284,28 @@ public static class AccountingEndpoints
 
         //add expense
         group.MapPost("/Expense", async Task<Results<Created<ExpenseDto>, NotFound<string>>>
-            (ExpenseDto expenseDto, ShuleOneDatabaseContext db, IMapper mapper) =>
+            ([FromForm] ExpenseDto expenseDto, ShuleOneDatabaseContext db, IOptionsMonitor<Settings> settings, IMapper mapper) =>
         {
+        if (expenseDto.fk_from_account_id == 0)
+        {
+            Account defaultBankAccount = GetDefaultAccountId(PaymentMethod.Mpesa, db);
+            if (defaultBankAccount == null)
+            {
+                return TypedResults.NotFound("Default accounts not set.");
+            }
+            else
+            {
+                expenseDto.fk_from_account_id = defaultBankAccount.id;
+            }
+        }
+
+            //get to account with category
+            //TODO add checks for if expense category exist and has account
+            var expenseSubCategory = await db.ExpensesSubcategory.Where(es => es.id == expenseDto.fk_expense_subcategory_id).FirstAsync();
+            var expenseCategoryAccount = await db.ExpensesCategory.Where(e => e.id == expenseSubCategory.fk_expense_category_id).FirstAsync();
+
+            expenseDto.fk_to_account_id = expenseCategoryAccount.id;
+
             var fromAccount = await db.Account.AsNoTracking()
                 .FirstOrDefaultAsync(a => a.id == expenseDto.fk_from_account_id);
 
@@ -313,8 +334,34 @@ public static class AccountingEndpoints
             db.Transaction.Add(transaction);
             await db.SaveChangesAsync(); // Ensure transaction.id is available
 
+
+            var filePath = settings.CurrentValue.ReceiptLocation;
+            
+            string recieptLocation = $"{filePath}/{expenseDto.description}_{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}_{expenseDto.reciept.FileName.ToString()}";
+
+            if (!Directory.Exists(recieptLocation)) { Directory.CreateDirectory(Path.GetDirectoryName(recieptLocation)); }; // Ensure folder exists
+
+            using (var stream = new FileStream(recieptLocation, FileMode.Create))
+            {
+                await expenseDto.reciept.CopyToAsync(stream);
+            }
+
             expenseDto.fk_transaction_id = transaction.id;
-            Expense expense = mapper.Map<Expense>(expenseDto);
+            Expense expense = new Expense()
+            {
+                amount = expenseDto.amount,
+                description = expenseDto.description,
+                date_created = expenseDto.date_created,
+                date_paid = expenseDto.date_paid,
+                fk_from_account_id = expenseDto.fk_from_account_id,
+                fk_to_account_id = expenseDto.fk_to_account_id,
+                fk_transaction_id = expenseDto.fk_transaction_id,
+                fk_expense_subcategory_id = expenseDto.fk_expense_subcategory_id,
+                paid_by = expenseDto.paid_by,
+                payment_reference = expenseDto.payment_reference,
+                reciept = recieptLocation 
+            };
+
             await db.Expenses.AddAsync(expense);
             await db.SaveChangesAsync(); // Ensure transaction.id is available
 
@@ -348,9 +395,10 @@ public static class AccountingEndpoints
 
             await db.SaveChangesAsync();
 
-            expenseDto = mapper.Map<ExpenseDto>(expense);
+            //expenseDto = mapper.Map<ExpenseDto>(expense);
             return TypedResults.Created($"/api/Finance/{expenseDto.id}", expenseDto);
         })
+        .DisableAntiforgery() // This is the equivalent of [IgnoreAntiforgeryToken] for minimal APIs
         .WithName("RecordExpense")
         .WithOpenApi();
 
@@ -439,24 +487,39 @@ public static class AccountingEndpoints
         .WithName("GetRevenueRecordsPaginated")
         .WithOpenApi();
 
-
         group.MapGet("/CheckPayment", async (ShuleOneDatabaseContext db, string transactionReference) =>
         {
-            var revenue = db.Revenue.AsNoTracking()
+            var revenue = await db.Revenue.AsNoTracking()
                 .Where(r => r.payment_reference == transactionReference)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
 
-            if(revenue == null)
-            {
-                return Results.Ok(false);
-            }
-
-            return Results.Ok(true);
+            return Results.Ok(new { status = revenue != null });
         })
         .WithName("CheckPayment")
         .WithOpenApi();
 
+        group.MapGet("/Expense/Categories", async (ShuleOneDatabaseContext db, IMapper mapper) =>
+        {
+            var expenseCategories = await db.ExpensesCategory
+                .Include(e => e.ExpenseSubCategories)
+                .ToListAsync();
+
+            var categories = await db.ExpensesCategory
+                .Include(c => c.ExpenseSubCategories)
+                .ToListAsync();
+
+            var result = mapper.Map<List<ExpenseCategoryDto>>(categories);
+
+            return Results.Ok(result);
+        })
+        .WithName("Get")
+        .WithOpenApi();
+      
+    
     }
+
+
+    #region Helper procedures
 
     private static Account? GetDefaultAccountId(PaymentMethod paymentMethod, ShuleOneDatabaseContext db)
     {
@@ -598,4 +661,5 @@ public static class AccountingEndpoints
             return Result.Failure<string>("Error generating file.");
         }
     }
+    #endregion
 }

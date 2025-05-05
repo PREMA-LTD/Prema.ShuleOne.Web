@@ -39,9 +39,11 @@ namespace Prema.ShuleOne.Web.Server.AutoMapper
             CreateMap<Subcounty, SubcountyDto>();
             CreateMap<Ward, WardDto>();
 
-
             CreateMap<Expense, ExpenseDto>();
             CreateMap<ExpenseDto, Expense>();
+
+            CreateMap<ExpenseCategory, ExpenseCategoryDto>();
+            CreateMap<ExpenseSubCategory, ExpenseSubCategoryDto>();
         }
     }
 }

@@ -5,4 +5,9 @@
         public string FileStoragePath { get; set; }
         public string ReportTemplatePath { get; set; }
     }
+
+    public class Settings
+    {
+        public string ReceiptLocation { get; set; }
+    }
 }
