@@ -11,8 +11,12 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            //migrationBuilder.DropTable(
+            //    name: "expense_types");
+
+
             migrationBuilder.DropTable(
-                name: "expense_types");
+                name: "expense");
 
             migrationBuilder.CreateTable(
                 name: "expense",

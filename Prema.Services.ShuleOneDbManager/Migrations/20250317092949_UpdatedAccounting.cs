@@ -12,15 +12,15 @@ namespace Prema.Services.ShuleOneDbManager.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            //migrationBuilder.DropForeignKey(
-            //    name: "FK_transaction_account_fk_account_id",
-            //    table: "transaction");
+            migrationBuilder.DropForeignKey(
+                name: "FK_transaction_account_fk_account_id",
+                table: "transaction");
 
-            migrationBuilder.DropTable(
-                name: "journal_entry");
+            //migrationBuilder.DropTable(
+            //    name: "journal_entry");
 
-            migrationBuilder.DropTable(
-                name: "transaction_type");
+            //migrationBuilder.DropTable(
+            //    name: "transaction_type");
 
             migrationBuilder.DropIndex(
                 name: "IX_transaction_fk_account_id",
