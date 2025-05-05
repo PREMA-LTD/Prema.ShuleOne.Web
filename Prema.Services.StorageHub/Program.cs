@@ -24,7 +24,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.Configure<GoogleDriveApiSettings>(builder.Configuration.GetSection("GoogleDriveApiSettings"));
 
-builder.Services.AddSingleton<FileStorageService>();
+builder.Services.AddSingleton<GoogleFileStorageService>();
 
 //builder.Services.AddMassTransit(x =>
 //{
@@ -101,8 +101,8 @@ builder.Services.AddSingleton<DriveService>(sp =>
     return service;
 });
 
-// Register FileStorageService
-builder.Services.AddTransient<FileStorageService>();
+// Register GoogleFileStorageService
+builder.Services.AddTransient<GoogleFileStorageService>();
 
 var app = builder.Build();
 

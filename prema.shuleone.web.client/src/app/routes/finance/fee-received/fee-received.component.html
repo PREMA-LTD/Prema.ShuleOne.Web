@@ -1,0 +1,19 @@
+<page-header class="bg-cyan-50"></page-header>
+    
+<div class="table-container" fxLayout="column" fxLayoutAlign="center stretch">
+  
+  <h1>Fee Payment</h1>
+    <mtx-grid
+      fxFlex
+      [data]="revenueRecords"
+      [columns]="columns"
+      [length]="total"
+      [loading]="isLoading"
+      [pageOnFront]="false"
+      [pageIndex]="query.page"
+      [pageSize]="query.per_page"
+      [pageSizeOptions]="[5,10,20,50]"
+      (page)="getNextPage($event)">
+    </mtx-grid>
+</div>
+  

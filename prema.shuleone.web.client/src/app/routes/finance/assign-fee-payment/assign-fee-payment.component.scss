@@ -1,0 +1,142 @@
+
+      
+    
+      /* Define custom styles for the tag colors */
+      .tag-paid {
+        background-color: green !important;
+        color: white !important;
+      }
+      
+      .tag-pending {
+        background-color: orange !important;
+        color: white !important;
+      }
+      
+      .tag-overdue {
+        background-color: red !important;
+        color: white !important;
+      }
+      
+      .table-container {
+        padding: 16px;
+      }
+      
+      .form-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+      }
+      
+      .flex-field {
+        flex: 1 1 calc(50% - 16px);
+        min-width: 200px;
+      }
+      
+      .action-button {
+        margin-top: 8px; /* Reduced space between button and form */
+      }
+      
+      .button-container {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px; /* Adds space between buttons and table */
+      }
+      
+      .mtx-grid-container {
+        height: 500px; /* Increase the table height */
+        overflow-y: auto;
+      }
+      
+      @media (max-width: 600px) {
+        .flex-field {
+          flex: 1 1 100%;
+        }
+      }
+      
+      :host {
+        display: block;
+      }
+      
+      .step-container {
+        position: relative;
+        overflow: hidden;
+        min-height: 300px;
+        width: 100%;
+        padding: 0 1rem;  /* Add padding to container */
+      }
+  
+      .step-content {
+        position: absolute;
+        width: 100%;
+        top: 0;
+        left: 0;
+        height: 100%;     /* Add this */
+        display: block;    /* Add this */
+      }
+  
+      .stepper-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 0rem;
+        margin-top: 1rem;
+      }
+  
+      .step-wrapper {
+        display: flex;
+        align-items: center;
+      }
+  
+      .step-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+      }
+  
+      .step-active {
+        background-color: #f59e0b;
+        transform: scale(1.2);
+      }
+  
+      .step-completed {
+        background-color: #22c55e;
+      }
+  
+      .step-inactive {
+        background-color: #e5e7eb;
+        border: 2px solid #9ca3af;
+      }
+  
+      .step-line {
+        width: 64px;
+        height: 2px;
+        margin: 0 8px;
+        transition: background-color 0.3s ease;
+        flex-shrink: 0;
+      }
+  
+      .line-completed {
+        background-color: #22c55e;
+      }
+  
+      .line-inactive {
+        background-color: #e5e7eb;
+      }
+
+      .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+        z-index: 1000; /* Ensure it's on top of other content */
+      }
+      

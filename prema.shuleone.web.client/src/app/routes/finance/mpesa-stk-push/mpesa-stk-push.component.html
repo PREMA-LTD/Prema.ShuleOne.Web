@@ -52,6 +52,10 @@
                                 <button mat-raised-button color="primary" (click)="initiateMpesaPrompt()">
                                     Initiate Mpesa Prompt
                                 </button>
+                                
+                                <button mat-raised-button color="warn" (click)="close()">
+                                    Close
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -88,6 +92,13 @@
                             </ol>
                             <!-- <button mat-raised-button color="primary" (click)="goToNextTab(tabGroup)">Check Payment</button> -->
                         </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="flex justify-end mt-4">
+                            <button mat-raised-button color="warn" (click)="close()">
+                                Close
+                            </button>
+                        </div>
                     </mat-tab>
                 
                 <!-- Tab 2: Bank Payment -->
@@ -107,6 +118,9 @@
                             <div class="flex justify-end mt-4">
                                 <button mat-raised-button color="primary" (click)="recordPayment()">
                                     Check Payment
+                                </button>
+                                <button mat-raised-button color="warn" (click)="close()">
+                                    Close
                                 </button>
                             </div>
                         </form>

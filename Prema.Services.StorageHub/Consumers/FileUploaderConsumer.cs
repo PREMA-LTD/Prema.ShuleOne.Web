@@ -5,7 +5,7 @@ using Prema.Services.StorageHub.Services;
 
 namespace Prema.Services.UnifiedNotifier.Consumers
 {
-    public class FileUploaderConsumer(FileStorageService fileStorageService) : IConsumer<FileUpload>
+    public class FileUploaderConsumer(GoogleFileStorageService fileStorageService) : IConsumer<FileUpload>
     {
         public async Task Consume(ConsumeContext<FileUpload> context)
         {

@@ -5,6 +5,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TransactionStatus } from 'app/models/transansaction.model';
 import { FinanceService } from 'app/service/finance.service';
 import { MatTabGroup } from '@angular/material/tabs';
+import { AccountingService } from 'app/service/accounting.service';
 
 @Component({
   selector: 'app-finance-mpesaStkPush',
@@ -14,6 +15,7 @@ import { MatTabGroup } from '@angular/material/tabs';
 export class FinanceMpesaStkPushComponent implements OnInit {
 
   private readonly financeService = inject(FinanceService);
+  private readonly accountingService = inject(AccountingService);
 
   paymentData?: any;
   mpesaPaymentForm!: FormGroup;
@@ -108,21 +110,19 @@ export class FinanceMpesaStkPushComponent implements OnInit {
       const recordPaymentFormData = this.recordPaymentForm.value;
 
       const transactionRef = recordPaymentFormData.transactionRef;
-
-      const response = await this.financeService.checkPayment(transactionRef)
+      
+      const response = await this.accountingService.checkPaymentStatus(transactionRef)
+      
       this.paymentChecked = true; // Indicates payment check is performed
  
-      if(response?.status == 0){
+      if(response){
         this.paymentReceived = true;
-      this._snackBar.open('Mpesa payment received successfully.', 'Ok', {
-        horizontalPosition: 'right',
-        verticalPosition: 'top',
-        duration: 10 * 1000,
-        });
-
-        
-        this.dialogRef.close();
-        
+        this._snackBar.open('Mpesa payment received successfully.', 'Ok', {
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          duration: 10 * 1000,
+        });        
+        this.dialogRef.close(response);        
       } else {
         this.paymentReceived = false;
         this._snackBar.open('Mpesa payment not recieved.', 'Ok', {
@@ -130,9 +130,8 @@ export class FinanceMpesaStkPushComponent implements OnInit {
           horizontalPosition: 'right',
           verticalPosition: 'top',
           duration: 5 * 1000,
-          });
+        });
       }
-
     
     } catch(error) {
       console.error('Error sending message:', error);
@@ -146,8 +145,8 @@ export class FinanceMpesaStkPushComponent implements OnInit {
     };
   }
 
-  // goToNextTab(tabGroup: MatTabGroup): void {
-  //   const nextIndex = tabGroup.selectedIndex !== undefined ? tabGroup.selectedIndex + 1 : 1;
-  //   tabGroup.selectedIndex = nextIndex;
-  // }
+  close(){
+    this.dialogRef.close();
+  }
+
 }

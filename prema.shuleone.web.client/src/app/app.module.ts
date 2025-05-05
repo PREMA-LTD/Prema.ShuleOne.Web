@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpClientXsrfModule, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
@@ -38,7 +38,12 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     RoutesModule,
     KeycloakAngularModule,
     ReactiveFormsModule,
-    FormsModule,
+    FormsModule,    
+    HttpClientModule,
+    HttpClientXsrfModule.withOptions({
+      cookieName: '.AspNetCore.Antiforgery.YOUR_TOKEN_NAME',
+      headerName: 'X-XSRF-TOKEN'
+    }),
     FormlyConfigModule.forRoot(),
     NgxPermissionsModule.forRoot(),
     ToastrModule.forRoot(),

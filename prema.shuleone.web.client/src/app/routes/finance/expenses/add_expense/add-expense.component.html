@@ -1,0 +1,73 @@
+<form (ngSubmit)="onSubmit()" [formGroup]="addExpenseForm" enctype="multipart/form-data" style="padding: 16px;">
+  <mat-card style="padding: 16px;">
+    <mat-card-title>Add New Expense</mat-card-title>
+    <mat-card-content style="padding: 16px;">
+      <div class="form-group">
+
+        <!-- Description -->
+        <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+          <mat-label>Description</mat-label>
+          <input matInput formControlName="description" [(ngModel)]="expense.description" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Category</mat-label>
+          <mat-select formControlName="category" required (selectionChange)="onCategoryChange($event.value)">
+            <mat-option *ngFor="let category of expenseCategories" [value]="category.id">
+              {{category.name}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="addExpenseForm.get('category')?.invalid">
+            County is required
+          </mat-error>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Sub Category</mat-label>
+          <mat-select formControlName="fk_expense_subcategory_id" [(ngModel)]="expense.fk_expense_subcategory_id" required>
+            <mat-option *ngFor="let subCategory of expenseSubCategories" [value]="subCategory.id">
+              {{subCategory.name}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="addExpenseForm.get('subCategory')?.invalid">
+            Sub Category is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Amount -->
+        <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+          <mat-label>Amount</mat-label>
+          <input matInput type="number" formControlName="amount" [(ngModel)]="expense.amount" required />
+        </mat-form-field>
+
+        <!-- Payment Reference -->
+        <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+          <mat-label>Payment Reference</mat-label>
+          <input matInput formControlName="payment_reference" [(ngModel)]="expense.payment_reference" required />
+        </mat-form-field>
+
+        <!-- Date Paid -->
+        <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+          <mat-label>Date Paid</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="date_paid" [(ngModel)]="expense.date_paid" required />
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Receipt Upload -->
+        <div style="margin-top: 16px; margin-bottom: 16px;">
+          <label for="file" style="display: block;">Receipt (Image, PDF, or DOC):</label>
+          <input type="file" id="file" (change)="onFileSelected($event)" accept="image/*,.pdf,.doc,.docx" />
+        </div>
+
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions style="padding-top: 16px;">
+      <button mat-flat-button color="primary" type="submit" [disabled]="addExpenseForm.invalid" style="margin-right: 8px;">
+        Save Expense
+      </button>
+      <button mat-button type="button" (click)="cancel()">Cancel</button>
+    </mat-card-actions>
+  </mat-card>
+</form>

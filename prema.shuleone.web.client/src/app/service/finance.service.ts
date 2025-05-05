@@ -6,6 +6,7 @@ import { KeycloakService } from 'keycloak-angular';
 import { KeycloakProfile } from 'keycloak-js';
 import { Student } from 'app/models/student.model';
 import { TransactionResult } from 'app/models/transansaction.model';
+import { ExpensePagination } from 'app/models/finance.model';
 
 
 @Injectable({
@@ -30,4 +31,5 @@ export class FinanceService {
   async checkPayment(transactionId: string): Promise<TransactionResult | undefined> {
     return this.http.get<TransactionResult>(`https://www.prema.co.ke/api/Transactions/TransactionStatus?transactionId=${transactionId}`).toPromise();
   }
+  
 }

@@ -73,8 +73,6 @@ export interface DateOfBirth {
     admission_status: AdmissionStatus;
   }
   
-
-  
   export enum AdmissionStatus
   {
       Pending = 1,

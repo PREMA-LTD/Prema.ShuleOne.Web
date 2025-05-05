@@ -56,4 +56,9 @@
     <ProjectReference Include="..\Prema.ShuleOne.Web.ServiceDefaults\Prema.ShuleOne.Web.ServiceDefaults.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <Folder Include="Endpoints\Reports\GeneratedReports\Receipts\" />
+  </ItemGroup>
+
 </Project>

@@ -58,6 +58,9 @@ public static class FinanceEndpint
             return Results.BadRequest(new { Message = "Invalid request body." });
         });
 
+
+
+
     }
 
     public class PaymentDetails

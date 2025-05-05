@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Prema.ShuleOne.Web.Server.Database;
 using Prema.ShuleOne.Web.Server.Database.LocationData;
 using Prema.ShuleOne.Web.Server.Models;
+using Prema.ShuleOne.Web.Server.Models.Location;
 
 
 namespace Prema.Services.ShuleOneDbManager;
@@ -44,6 +45,9 @@ internal class ShuleOneDbInitializer(IServiceProvider serviceProvider, ILogger<S
 
         await InsertLocationData(dbContext, cancellationToken);
 
+        //insert default accounts
+        await InsertDefaultAccounts(dbContext, cancellationToken);
+
         //insert enums
 
         //insert grades
@@ -68,10 +72,10 @@ internal class ShuleOneDbInitializer(IServiceProvider serviceProvider, ILogger<S
             cancellationToken);
 
         //insert transaction types
-        await InsertEnumValues<TransactionType, TransactionTypes>(
+        await InsertEnumValues<JournalEntryType, JournalEntryTypes>(
             dbContext,
-            dbContext.TransactionTypes,
-            ft => new TransactionTypes { id = (int)ft, name = ft.ToString() },
+            dbContext.JournalEntryTypes,
+            ft => new JournalEntryTypes { id = (int)ft, name = ft.ToString() },
             cancellationToken);
 
         //insert account types
@@ -93,6 +97,34 @@ internal class ShuleOneDbInitializer(IServiceProvider serviceProvider, ILogger<S
             dbContext,
             dbContext.ReceiptItemTypes,
             ft => new ReceiptItemTypes { id = (int)ft, name = ft.ToString() },
+            cancellationToken);
+
+        //insert receipt itemm types
+        await InsertEnumValues<FileLocationType, FileLocationTypes>(
+            dbContext,
+            dbContext.FileLocationTypes,
+            ft => new FileLocationTypes { id = (int)ft, name = ft.ToString() },
+            cancellationToken);
+
+        //insert receipt itemm types
+        await InsertEnumValues<RevenueStatus, RevenueStatuses>(
+            dbContext,
+            dbContext.RevenueStatuses,
+            ft => new RevenueStatuses { id = (int)ft, name = ft.ToString() },
+            cancellationToken);
+
+        //insert receipt itemm types
+        await InsertEnumValues<ReceiptStatus, ReceiptStatuses>(
+            dbContext,
+            dbContext.ReceiptStatuses,
+            ft => new ReceiptStatuses { id = (int)ft, name = ft.ToString() },
+            cancellationToken);
+
+        //insert receipt itemm types
+        await InsertEnumValues<TransactionType, TransactionTypes>(
+            dbContext,
+            dbContext.TransactionTypes,
+            ft => new TransactionTypes { id = (int)ft, name = ft.ToString() },
             cancellationToken);
     }
 
@@ -147,5 +179,62 @@ internal class ShuleOneDbInitializer(IServiceProvider serviceProvider, ILogger<S
             // Save changes
             await dbContext.SaveChangesAsync(cancellationToken);
         }
+    }
+    
+    private static async Task InsertDefaultAccounts(ShuleOneDatabaseContext dbContext, CancellationToken cancellationToken)
+    {
+        var currentAccounts = await dbContext.Account.AsNoTracking().ToListAsync();
+
+        if (currentAccounts.Count() == 0)
+        {
+            List<Account> dafaultAccounts = new List<Account>()
+            {
+                new Account()
+                {
+                    name = "KCB",
+                    fk_account_type_id = (int)AccountType.Asset,
+                    default_source = PaymentMethod.Mpesa,
+                    balance = 0,
+                    created_by = "0",
+                },
+                new Account()
+                {
+                    name = "Fees Receivable",
+                    fk_account_type_id = (int)AccountType.Revenue,
+                    default_source = PaymentMethod.InternalTransaction,
+                    balance = 0,
+                    created_by = "0",
+                }
+            };
+
+            await dbContext.Account.AddRangeAsync(dafaultAccounts, cancellationToken);
+        }
+        else { 
+            if(!currentAccounts.Any(a => a.default_source == PaymentMethod.Mpesa))
+            {
+                await dbContext.Account.AddAsync(new Account()
+                {
+                    name = "Bank Name",
+                    fk_account_type_id = (int)AccountType.Asset,
+                    default_source = PaymentMethod.Mpesa,
+                    balance = 0,
+                    created_by = "0",
+                });
+            }
+
+            if(!currentAccounts.Any(a => a.default_source == PaymentMethod.InternalTransaction))
+            {
+                await dbContext.Account.AddAsync(new Account()
+                {
+                    name = "Fees Receivable",
+                    fk_account_type_id = (int)AccountType.Revenue,
+                    default_source = PaymentMethod.InternalTransaction,
+                    balance = 0,
+                    created_by = "0",
+                });
+            }
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

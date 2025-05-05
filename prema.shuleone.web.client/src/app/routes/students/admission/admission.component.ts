@@ -159,8 +159,7 @@ export class StudentsAdmissionComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result.success === true) {
-      }
+      this.getStudents();
     });
   }
 
@@ -172,7 +171,7 @@ export class StudentsAdmissionComponent implements OnInit {
   }
 
   async getAdmissionLetter(studentRecord: Student) {
-
+    this.studentService.downloadAdmissionLetter(studentRecord.id);
   }
 
   async initiateMpesaPayment(studentRecord: Student){
@@ -185,7 +184,7 @@ export class StudentsAdmissionComponent implements OnInit {
       let paymentData = {
           mpesaNumber : studentContact?.find(contact => contact.contact_priority === 1)?.phone_number,
           feeType: "Admission Fee",
-          amount: 500
+          amount: 300
         }
         
         console.log("initiateMpesaPayment paymentDetails"+JSON.stringify(paymentData))
@@ -196,8 +195,12 @@ export class StudentsAdmissionComponent implements OnInit {
         });
     
         dialogRef.afterClosed().subscribe(result => {
-          if (result.success === true) {
+          if (result === true) {
+            // Refresh the table after a successful payment
+            this.studentService.updateAdmissionStatus(studentRecord.id);            
           }
+          this.getStudents();
+          this.dialog.closeAll();
         });
     })
     .catch(error => {

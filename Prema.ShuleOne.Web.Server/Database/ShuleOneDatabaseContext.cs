@@ -26,6 +26,10 @@ namespace Prema.ShuleOne.Web.Server.Database
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<Account>()
+                .HasIndex(u => u.default_source)
+                .IsUnique();
+
             base.OnModelCreating(builder);
 
             this.OnModelBuilding(builder);
@@ -49,16 +53,25 @@ namespace Prema.ShuleOne.Web.Server.Database
         public DbSet<Account> Account { get; set; }
         public DbSet<Transaction> Transaction { get; set; }
         public DbSet<JournalEntry> JournalEntry { get; set; }
-        public DbSet<GeneralLedger> GeneralLedger { get; set; }
+        //public DbSet<GeneralLedger> GeneralLedger { get; set; }
         //public DbSet<Invoice> Invoice { get; set; }
         public DbSet<Revenue> Revenue { get; set; }
-        public DbSet<Expense> Expense { get; set; }
+        //public DbSet<Expense> Expense { get; set; }
         public DbSet<AccountTypes> AccountTypes { get; set; }
-        public DbSet<TransactionTypes> TransactionTypes { get; set; }
+        public DbSet<JournalEntryTypes> JournalEntryTypes { get; set; }
         //public DbSet<InvoiceStatuses> InvoiceStatuses { get; set; }
         public DbSet<PaymentMethods> PaymentMethods { get; set; }
         public DbSet<Receipt> Receipts { get; set; }
         public DbSet<ReceiptItem> ReceiptItems { get; set; }
         public DbSet<ReceiptItemTypes> ReceiptItemTypes { get; set; }
+        public DbSet<FileLocationTypes> FileLocationTypes { get; set; }
+        public DbSet<RevenueStatuses> RevenueStatuses { get; set; }
+        public DbSet<ReceiptStatuses> ReceiptStatuses { get; set; }
+        public DbSet<TransactionTypes> TransactionTypes { get; set; }
+        public DbSet<Expense> Expenses { get; set; }
+        public DbSet<ExpenseCategory> ExpensesCategory { get; set; }
+        public DbSet<ExpenseSubCategory> ExpensesSubcategory { get; set; }
+        public DbSet<AccountCategories> AccountCategories { get; set; }
+        public DbSet<AdmissionLetter> AdmissionLetter { get; set; }
     }
 }
