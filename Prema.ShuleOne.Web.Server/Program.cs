@@ -17,6 +17,7 @@ using Serilog;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/PremaShuleOneWebServer.log", rollingInterval: RollingInterval.Day)
+    .WriteTo.Console()
     .CreateLogger();
 
 
@@ -62,7 +63,7 @@ builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection
 builder.Services.Configure<ReportSettings>(builder.Configuration.GetSection("ReportSettings"));
 builder.Services.Configure<Settings>(builder.Configuration.GetSection("AppSettings"));
 builder.Services.AddSingleton<TelegramBot>();
-//builder.Services.AddSingleton<Logger>();
+builder.Services.AddSingleton<Logger>();
 builder.Services.AddSingleton<MpesaRequestService>();
 builder.Services.AddScoped<FileGeneratorService>();
 
