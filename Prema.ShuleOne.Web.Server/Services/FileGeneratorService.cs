@@ -87,27 +87,27 @@ namespace Prema.ShuleOne.Web.Server.Services
             }
             catch (ServiceUsageException ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex.Message);
+                logger.LogError("ServiceUsageException encountered while executing operation: "+ ex.Message);
                 return TypedResults.BadRequest<string>("ServiceUsageException: " + ex.Message);
             }
             catch (ServiceApiException ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex.Message);
+                logger.LogError("ServiceApiException encountered while executing operation: " + ex.Message);
                 return TypedResults.BadRequest<string>("ServiceApiException: " + ex.Message);
             }
             catch (SDKException ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex.Message);
+                logger.LogError("SDKException encountered while executing operation: " + ex.Message);
                 return TypedResults.BadRequest<string>("SDKException: " + ex.Message);
             }
             catch (IOException ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex.Message);
+                logger.LogError("IOException encountered while executing operation: " + ex.Message);
                 return TypedResults.BadRequest<string>("IOException: " + ex.Message);
             }
             catch (Exception ex)
             {
-                logger.LogError("Exception encountered while executing operation", ex.Message);
+                logger.LogError("Exception encountered while executing operation: " + ex.Message);
                 return TypedResults.BadRequest<string>("Exception: " + ex.Message);
             }
         }
