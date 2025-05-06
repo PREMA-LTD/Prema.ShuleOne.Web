@@ -37,7 +37,7 @@ public static class ReportsEndpoint
         group.MapPost("/GenerateAdmissionLetter", async Task<Results<Ok<string>, NotFound, BadRequest<string>>> ([FromBody] AdmissionLetterDetails admissionLetterDetails, FileGeneratorService fileGeneratorService) =>
         {
             string fileName = $"{admissionLetterDetails.AdmissionNumber} - {admissionLetterDetails.StudentOtherNames} {admissionLetterDetails.StudentFirstName}_AdmissionLetter{DateTime.UtcNow.ToString("ddMMyyHHmmss")}.pdf";
-            string outputFilePath = $"/GeneratedReports/AdmissionLeters/{fileName}";
+            string outputFilePath = $"/AdmissionLeters/{fileName}";
             string templateFileName = "LifewayAdmissionLetterTemplate.docx";
             JObject reportDetails = JObject.FromObject(admissionLetterDetails);
 

@@ -291,7 +291,7 @@ public static class StudentEndpoints
             };
 
             string fileName = $"{admissionLetterDetails.AdmissionNumber} - {admissionLetterDetails.StudentOtherNames} {admissionLetterDetails.StudentFirstName}_AdmissionLetter{DateTime.UtcNow.ToString("ddMMyyHHmmss")}.pdf";
-            string outputFilePath = $"/GeneratedReports/AdmissionLeters/{fileName}";
+            string outputFilePath = $"/AdmissionLeters/{fileName}";
             string templateFileName = "LifewayAdmissionLetterTemplate.docx";
             JObject reportDetails = JObject.FromObject(admissionLetterDetails);
             await fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
@@ -350,7 +350,7 @@ public static class StudentEndpoints
                 return Results.NotFound("Admission letter not found.");
             }
 
-            var filePath = Path.Combine(reportSettings.CurrentValue.FileStoragePath, admissionLetter.file_location);
+            var filePath = admissionLetter.file_location;
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return Results.File(fileStream, "application/pdf", Path.GetFileName(admissionLetter.file_location));
         })

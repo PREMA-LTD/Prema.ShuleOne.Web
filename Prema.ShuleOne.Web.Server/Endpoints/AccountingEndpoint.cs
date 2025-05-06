@@ -275,7 +275,7 @@ public static class AccountingEndpoints
                 return TypedResults.NotFound("File not found.");
             }
 
-            var filePath = Path.Combine(reportSettings.CurrentValue.FileStoragePath, receipt.file_location);
+            var filePath = receipt.file_location;
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return Results.File(fileStream, "application/pdf", Path.GetFileName(receipt.file_location));
         })
@@ -610,7 +610,7 @@ public static class AccountingEndpoints
         switch (receipt.file_location_type)
         {
             case FileLocationType.Local:
-                return File.Exists(Path.Combine(baseFileStoragePath, receipt.file_location));
+                return File.Exists(receipt.file_location);
             default:
                 return false;
         }
