@@ -13,8 +13,16 @@ using Prema.ShuleOne.Web.Server.Controllers;
 using Prema.ShuleOne.Web.Server.Services;
 using Microsoft.Extensions.Hosting;
 using Prema.ShuleOne.Web.Server.Endpoints.Reports;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File("logs/PremaShuleOneWebServer.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
 
 builder.AddServiceDefaults();
 
@@ -43,7 +51,7 @@ builder.Services.AddDbContext<ShuleOneDatabaseContext>(
     dbContextOptions => dbContextOptions
         .UseMySql(connectionString, serverVersion,
             options => options.EnableRetryOnFailure()) // Enable transient error resiliency
-        .LogTo(Console.WriteLine, LogLevel.Information)
+        .LogTo(Console.WriteLine, LogLevel.Error)
         .EnableSensitiveDataLogging()
         .EnableDetailedErrors()
 );
@@ -54,7 +62,7 @@ builder.Services.Configure<TelegramBotSettings>(builder.Configuration.GetSection
 builder.Services.Configure<ReportSettings>(builder.Configuration.GetSection("ReportSettings"));
 builder.Services.Configure<Settings>(builder.Configuration.GetSection("AppSettings"));
 builder.Services.AddSingleton<TelegramBot>();
-builder.Services.AddSingleton<Logger>();
+//builder.Services.AddSingleton<Logger>();
 builder.Services.AddSingleton<MpesaRequestService>();
 builder.Services.AddScoped<FileGeneratorService>();
 

@@ -299,7 +299,8 @@ public static class StudentEndpoints
             {
                 var res = await fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
 
-                logger.LogInformation(res.Result.ToString());
+
+                logger.LogInformation("Returning BadRequest: {Result}", res);
             }
             catch (Exception ex)
             {
