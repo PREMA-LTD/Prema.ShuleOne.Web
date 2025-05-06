@@ -204,7 +204,7 @@ public static class StudentEndpoints
         .WithName("CreateStudent")
         .WithOpenApi();
 
-        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa, FileGeneratorService fileGeneratorService, IOptionsMonitor<ReportSettings> reportSettings, ILogger logger) =>
+        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa, FileGeneratorService fileGeneratorService, IOptionsMonitor<ReportSettings> reportSettings, ILogger<Program> logger) =>
         {
             DateTime currentDateTime = DateTime.UtcNow;
             Student student = new Student()
