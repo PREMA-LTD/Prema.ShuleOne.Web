@@ -204,7 +204,7 @@ public static class StudentEndpoints
         .WithName("CreateStudent")
         .WithOpenApi();
 
-        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa, FileGeneratorService fileGeneratorService, IOptionsMonitor<ReportSettings> reportSettings) =>
+        group.MapPost("/Admit/", async (StudentDto studentDto, ShuleOneDatabaseContext db, IBulkSms mobileSasa, FileGeneratorService fileGeneratorService, IOptionsMonitor<ReportSettings> reportSettings, ILogger logger) =>
         {
             DateTime currentDateTime = DateTime.UtcNow;
             Student student = new Student()
@@ -294,7 +294,17 @@ public static class StudentEndpoints
             string outputFilePath = $"/AdmissionLeters/{fileName}";
             string templateFileName = "LifewayAdmissionLetterTemplate.docx";
             JObject reportDetails = JObject.FromObject(admissionLetterDetails);
-            await fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
+
+            try
+            {
+                var res = await fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
+
+                logger.LogInformation(res.Result.ToString());
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
 
             string storageBasePath = reportSettings.CurrentValue.FileStoragePath;
             outputFilePath = $"{storageBasePath}{outputFilePath}";
