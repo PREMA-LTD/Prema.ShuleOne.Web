@@ -451,7 +451,7 @@ public static class AccountingEndpoints
                     student => student.id,
                     (revenue, student) => new { Revenue = revenue, Student = student.First() } // Left join effect
                 )
-                .OrderBy(c => c.Revenue.id)
+                .OrderByDescending(r => r.Revenue.payment_date)
                 .AsQueryable();
 
 
