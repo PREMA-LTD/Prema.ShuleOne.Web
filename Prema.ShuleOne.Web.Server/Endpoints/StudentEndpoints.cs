@@ -40,6 +40,7 @@ public static class StudentEndpoints
             {
                 var filteredStudents = await query
                     .Where(s => s.current_grade == (Grades)grade)
+                    .OrderBy(s => s.date_of_admission)
                     .ToListAsync();
 
                 return Results.Ok(filteredStudents);
