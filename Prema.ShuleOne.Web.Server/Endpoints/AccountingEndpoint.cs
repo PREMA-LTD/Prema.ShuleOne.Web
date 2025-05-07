@@ -423,7 +423,7 @@ public static class AccountingEndpoints
             var allExpenses = await query
                 .Skip(pageNumber * pageSize)
                 .Take(pageSize)
-                .OrderBy(e => e.date_paid)
+                .OrderByDescending(e => e.date_paid)
                 .ToListAsync();
 
             // Return results including pagination metadata
