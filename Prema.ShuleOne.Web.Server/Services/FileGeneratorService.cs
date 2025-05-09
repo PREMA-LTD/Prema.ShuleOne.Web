@@ -53,8 +53,11 @@ namespace Prema.ShuleOne.Web.Server.Services
                 IAsset resultAsset = pdfServicesResponse.Result.Asset;
                 StreamAsset streamAsset = pdfServices.GetContent(resultAsset);
 
-                // Creating output streams and copying stream asset's content to it       
+                // Creating output streams and copying stream asset's content to it   
+                logger.LogInformation($"storageBasePath: {storageBasePath}");  
+                logger.LogInformation($"outputFilePath: {outputFilePath}");
                 outputFilePath = $"{storageBasePath}{outputFilePath}";
+                logger.LogInformation($"combined outputFilePath: {outputFilePath}");
 
                 // Ensure directory exists
                 new FileInfo(outputFilePath).Directory.Create();
