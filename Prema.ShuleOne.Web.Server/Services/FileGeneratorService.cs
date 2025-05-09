@@ -56,7 +56,9 @@ namespace Prema.ShuleOne.Web.Server.Services
                 // Creating output streams and copying stream asset's content to it   
                 logger.LogInformation($"storageBasePath: {storageBasePath}");  
                 logger.LogInformation($"outputFilePath: {outputFilePath}");
-                outputFilePath = $"{storageBasePath}{outputFilePath}";
+                //outputFilePath = $"{storageBasePath}{outputFilePath}";
+                outputFilePath = Path.Combine(storageBasePath, outputFilePath.TrimStart(Path.DirectorySeparatorChar));
+
                 logger.LogInformation($"combined outputFilePath: {outputFilePath}");
 
                 // Ensure directory exists
