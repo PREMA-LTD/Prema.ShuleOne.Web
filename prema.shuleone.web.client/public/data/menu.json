@@ -16,7 +16,7 @@
       "type": "sub",
       "icon": "person",
       "permissions": {
-        "only": ["super-admin", "admin"],
+        "only": ["super-admin", "admin", "finance"],
         "redirectTo": "/"
       },
       "children": [
@@ -26,7 +26,7 @@
           "type": "link",
           "icon": "assignment",
           "permissions": {
-            "only": ["super-admin"],
+            "only": ["super-admin", "admin", "finance"],
             "redirectTo": "/"
           }
         },
@@ -36,7 +36,7 @@
           "type": "link",
           "icon": "person",
           "permissions": {
-            "only": ["super-admin", "admin"],
+            "only": ["super-admin", "admin", "finance"],
             "redirectTo": "/"
           }
         },
