@@ -58,7 +58,7 @@
       "type": "sub",
       "icon": "money",
       "permissions": {
-        "only": ["super-admin", "admin", "finance"],
+        "only": ["super-admin", "finance"],
         "redirectTo": "/"
       },
       "children": [
@@ -68,7 +68,7 @@
           "type": "link",
           "icon": "money",
           "permissions": {
-            "only": ["super-admin", "admin", "finance"],
+            "only": ["super-admin", "finance"],
             "redirectTo": "/"
           }
         },
@@ -78,7 +78,7 @@
           "type": "link",
           "icon": "money",
           "permissions": {
-            "only": ["super-admin", "admin", "finance"],
+            "only": ["super-admin", "finance"],
             "redirectTo": "/"
           }
         }

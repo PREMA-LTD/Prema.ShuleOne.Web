@@ -77,7 +77,7 @@ export class StudentsAdmissionComponent implements OnInit {
         {
           text: 'Pay Admission Fee',
           icon: "payment",
-          iif: (record: any) => record.admission_status === 1, // Unpaid status
+          iif: (record: any) => record.admission_status === 1 && (this.keycloakService.isUserInRole("finance") || this.keycloakService.isUserInRole("super-admin")),
           click: (studentRecord: Student) => this.initiateMpesaPayment(studentRecord)
         },
         {

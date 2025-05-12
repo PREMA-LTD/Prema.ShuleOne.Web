@@ -390,16 +390,24 @@ export class AdmissionFormComponent {
       this._snackBar.open('Student admitted successfully.', 'Ok', {
         horizontalPosition: 'right',
         verticalPosition: 'top',
-        duration: 5 * 1000,
+        duration: 10 * 1000,
         });
-        const paymentDetails: any = {
-          feeType: "Admission Fee",
-          amount: 2,
-          mpesaNumber: studentAdmissionData.primary_contact.phone_number
-        }
 
-        this.admitNewStudent(paymentDetails);
-        
+      this._snackBar.open('Proceed to bursar for payment of admission fee..', 'Ok', {
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          duration: 10 * 1000,
+          });
+
+
+        // const paymentDetails: any = {
+        //   feeType: "Admission Fee",
+        //   amount: 2,
+        //   mpesaNumber: studentAdmissionData.primary_contact.phone_number
+        // }
+
+        // this.admitNewStudent(paymentDetails);
+        this.dialog.closeAll();
       } else {
         this._snackBar.open('Error admitting student, please try again.', 'Ok', {
           panelClass: ['error-snackbar'],  // Add a custom CSS class
