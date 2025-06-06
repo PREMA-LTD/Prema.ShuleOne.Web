@@ -84,7 +84,7 @@ export class StudentsAdmissionComponent implements OnInit {
           text: 'Admission Letter',
           color: 'primary',
           icon: "download",
-          iif: (record: any) => record.admission_status !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
+          iif: (record: any) => record.admission_status !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin") || (this.keycloakService.isUserInRole("finance"))),
           click: (studentRecord: Student) => this.getAdmissionLetter(studentRecord)
         }
       ]

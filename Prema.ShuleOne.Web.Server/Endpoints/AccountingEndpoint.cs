@@ -286,18 +286,18 @@ public static class AccountingEndpoints
         group.MapPost("/Expense", async Task<Results<Created<ExpenseDto>, NotFound<string>>>
             ([FromForm] ExpenseDto expenseDto, ShuleOneDatabaseContext db, IOptionsMonitor<Settings> settings, IMapper mapper) =>
         {
-        if (expenseDto.fk_from_account_id == 0)
-        {
-            Account defaultBankAccount = GetDefaultAccountId(PaymentMethod.Mpesa, db);
-            if (defaultBankAccount == null)
+            if (expenseDto.fk_from_account_id == 0)
             {
-                return TypedResults.NotFound("Default accounts not set.");
+                Account defaultBankAccount = GetDefaultAccountId(PaymentMethod.Mpesa, db);
+                if (defaultBankAccount == null)
+                {
+                    return TypedResults.NotFound("Default accounts not set.");
+                }
+                else
+                {
+                    expenseDto.fk_from_account_id = defaultBankAccount.id;
+                }
             }
-            else
-            {
-                expenseDto.fk_from_account_id = defaultBankAccount.id;
-            }
-        }
 
             //get to account with category
             //TODO add checks for if expense category exist and has account
@@ -335,23 +335,28 @@ public static class AccountingEndpoints
             await db.SaveChangesAsync(); // Ensure transaction.id is available
 
 
-            var filePath = settings.CurrentValue.ReceiptLocation;
-            
-            string recieptLocation = $"{filePath}/{expenseDto.description}_{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}_{expenseDto.reciept.FileName.ToString()}";
 
-            if (!Directory.Exists(recieptLocation)) { Directory.CreateDirectory(Path.GetDirectoryName(recieptLocation)); }; // Ensure folder exists
-
-            using (var stream = new FileStream(recieptLocation, FileMode.Create))
+            string recieptLocation = "";
+            if(expenseDto.reciept != null)
             {
-                await expenseDto.reciept.CopyToAsync(stream);
-            }
+                var filePath = settings.CurrentValue.ReceiptLocation;
+                
+                recieptLocation = $"{filePath}/{expenseDto.description}_{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}_{expenseDto.reciept.FileName.ToString()}";
 
+                if (!Directory.Exists(recieptLocation)) { Directory.CreateDirectory(Path.GetDirectoryName(recieptLocation)); }; // Ensure folder exists
+
+                using (var stream = new FileStream(recieptLocation, FileMode.Create))
+                {
+                    await expenseDto.reciept.CopyToAsync(stream);
+                }
+            }
+            
             expenseDto.fk_transaction_id = transaction.id;
             Expense expense = new Expense()
             {
                 amount = expenseDto.amount,
                 description = expenseDto.description,
-                date_created = expenseDto.date_created,
+                date_created = DateTime.UtcNow,
                 date_paid = expenseDto.date_paid,
                 fk_from_account_id = expenseDto.fk_from_account_id,
                 fk_to_account_id = expenseDto.fk_to_account_id,
