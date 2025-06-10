@@ -305,7 +305,9 @@ public static class AccountingEndpoints
             var expenseCategoryAccount = await db.ExpensesCategory.Where(e => e.id == expenseSubCategory.fk_expense_category_id).FirstAsync();
 
             expenseDto.fk_to_account_id = expenseCategoryAccount.id;
-            logger.LogInformation("expense to Account: " + expenseCategoryAccount);
+            logger.LogInformation("expense to Account: " + expenseCategoryAccount.id);
+            logger.LogInformation("expense sub Account: " + expenseSubCategory.id);
+            logger.LogInformation("expense fk_expense_subcategory_id: " + expenseDto.fk_expense_subcategory_id);
             
             var fromAccount = await db.Account.AsNoTracking()
                 .FirstOrDefaultAsync(a => a.id == expenseCategoryAccount.id);
