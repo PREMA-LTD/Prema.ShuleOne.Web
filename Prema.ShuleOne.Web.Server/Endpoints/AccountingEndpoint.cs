@@ -299,31 +299,31 @@ public static class AccountingEndpoints
                 }
             }
 
-            //get to account with category
-            //TODO add checks for if expense category exist and has account
-            var expenseSubCategory = await db.ExpensesSubcategory.Where(es => es.id == expenseDto.fk_expense_subcategory_id).FirstAsync();
-            var expenseCategoryAccount = await db.ExpensesCategory.Where(e => e.id == expenseSubCategory.fk_expense_category_id).FirstAsync();
-
-            expenseDto.fk_to_account_id = expenseCategoryAccount.id;
-            logger.LogInformation("expense to Account: " + expenseCategoryAccount.id);
-            logger.LogInformation("expense sub Account: " + expenseSubCategory.id);
-            logger.LogInformation("expense fk_expense_subcategory_id: " + expenseDto.fk_expense_subcategory_id);
-            
-            var fromAccount = await db.Account.AsNoTracking()
-                .FirstOrDefaultAsync(a => a.id == expenseCategoryAccount.id);
+            var fromAccount = await db.Account
+                .FirstOrDefaultAsync(a => a.id == expenseDto.fk_from_account_id);
 
             if (fromAccount == null)
             {
                 return TypedResults.NotFound("From account not found.");
             }
+            
+            //get to-account with category ie the expense account
+            //TODO add checks for if expense category exist and has account
+            var expenseSubCategory = await db.ExpensesSubcategory.Where(es => es.id == expenseDto.fk_expense_subcategory_id).FirstAsync();
+            var expenseCategoryAccount = await db.ExpensesCategory.Where(e => e.id == expenseSubCategory.fk_expense_category_id).FirstAsync();
 
-            var toAccount = await db.Account.AsNoTracking()
-                .FirstOrDefaultAsync(a => a.id == expenseDto.fk_to_account_id);
+            expenseDto.fk_to_account_id = expenseCategoryAccount.id;
+            logger.LogInformation("expense to Account: " + expenseCategoryAccount.fk_account_id);
+            logger.LogInformation("expense sub Account: " + expenseSubCategory.id);
+            logger.LogInformation("expense fk_expense_subcategory_id: " + expenseDto.fk_expense_subcategory_id);
+            
+            var toAccount = await db.Account
+                .FirstOrDefaultAsync(a => a.id == expenseCategoryAccount.fk_account_id);
             if (toAccount == null)
             {
                 return TypedResults.NotFound("To account not found.");
             }
-
+            
             Transaction transaction = new Transaction()
             {
                 amount = expenseDto.amount,
@@ -337,8 +337,7 @@ public static class AccountingEndpoints
             db.Transaction.Add(transaction);
             await db.SaveChangesAsync(); // Ensure transaction.id is available
 
-
-
+            //upload receipt 
             string recieptLocation = "";
             if(expenseDto.reciept != null)
             {
@@ -354,6 +353,7 @@ public static class AccountingEndpoints
                 }
             }
             
+            //record expense
             expenseDto.fk_transaction_id = transaction.id;
             Expense expense = new Expense()
             {
@@ -393,14 +393,16 @@ public static class AccountingEndpoints
             });
 
    
-            var fromAccountEntity = await db.Account.FindAsync(expenseDto.fk_from_account_id);
-            var toAccountEntity = await db.Account.FindAsync(expenseDto.fk_to_account_id);
+            // var fromAccountEntity = await db.Account.FindAsync(expenseDto.fk_from_account_id);
+            // var toAccountEntity = await db.Account.FindAsync(expenseDto.fk_to_account_id);
 
-            fromAccountEntity.balance -= expenseDto.amount;
-            toAccountEntity.balance += expenseDto.amount;
-            db.Update(fromAccountEntity);
-            db.Update(toAccountEntity);
-
+            var fromAccountNewBalance = fromAccount.balance - expenseDto.amount;
+            var toAccountNewBalance = toAccount.balance + expenseDto.amount;
+            fromAccount.balance = fromAccountNewBalance;
+            toAccount.balance = toAccountNewBalance;
+            db.Update(fromAccount);
+            db.Update(toAccount);
+            
             await db.SaveChangesAsync();
 
             //expenseDto = mapper.Map<ExpenseDto>(expense);
@@ -532,7 +534,7 @@ public static class AccountingEndpoints
 
     private static Account? GetDefaultAccountId(PaymentMethod paymentMethod, ShuleOneDatabaseContext db)
     {
-        Account account = db.Account.FirstOrDefault(a => a.default_source == paymentMethod);
+        Account account = db.Account.AsNoTracking().FirstOrDefault(a => a.default_source == paymentMethod);
 
         if (account == null)
         {
