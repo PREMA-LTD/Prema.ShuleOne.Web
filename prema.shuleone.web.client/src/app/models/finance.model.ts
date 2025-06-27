@@ -13,12 +13,12 @@ interface Revenue {
     date_created: string; // ISO date string
     recorded_by: string;
   }
-  
+
   export interface RevenueStudentRecord {
     revenue: Revenue;
     student: Student | null;
-  }  
-    
+  }
+
   export interface RevenueStudentRecordsPagination {
     total: number;
     revenueStudentRecords: RevenueStudentRecord[];
@@ -58,11 +58,11 @@ interface Revenue {
     paid_by: string;
     date_paid: Date | string;
     date_created: Date | string;
-    reciept?: File;
+    recieptRaw?: File;
   }
-  
 
-  
+
+
   export interface ExpenseCategories {
     id: number;
     name: string;
@@ -72,10 +72,9 @@ interface Revenue {
     id: number;
     name: string;
   }
-  
+
   export interface ExpenseCategoryDto {
     id: number;
     name: string;
     expenseSubCategories: ExpenseSubCategoryDto[];
   }
-  

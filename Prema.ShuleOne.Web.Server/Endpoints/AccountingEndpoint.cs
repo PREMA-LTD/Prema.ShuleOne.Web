@@ -10,7 +10,9 @@ using AutoMapper.Execution;
 using Newtonsoft.Json.Linq;
 using Prema.ShuleOne.Web.Server.Endpoints.Reports;
 using static Prema.ShuleOne.Web.Server.Controllers.FinanceEndpint;
+
 namespace Prema.ShuleOne.Web.Server.Endpoints;
+
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -22,7 +24,6 @@ using System.Text;
 
 public static class AccountingEndpoints
 {
-
     public static void MapAccountingEndpoints(this IEndpointRouteBuilder routes)
     {
         var loggerFactory = routes.ServiceProvider.GetRequiredService<ILoggerFactory>();
@@ -32,34 +33,122 @@ public static class AccountingEndpoints
         var group = routes.MapGroup("/api/Accounting").WithTags("Accounting");
 
         //add revenue
-        group.MapPost("/Revenue", async (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
-        {
-            //save revenue record
-            db.Revenue.Add(revenue);
-            await db.SaveChangesAsync();
+        group.MapPost("/Revenue",
+                async (Revenue revenue, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
+                {
+                    //save revenue record
+                    db.Revenue.Add(revenue);
+                    await db.SaveChangesAsync();
 
-            //check if account number valid
-            Student studentDetails = new Student();
-            var studentDetailsResult = GetStudentDetails(db, revenue.account_number);
+                    //check if account number valid
+                    Student studentDetails = new Student();
+                    var studentDetailsResult = GetStudentDetails(db, revenue.account_number);
 
-            if (studentDetailsResult.IsFailure)
+                    if (studentDetailsResult.IsFailure)
+                    {
+                        logger.LogWarning(studentDetailsResult.Error);
+                    }
+                    else
+                    {
+                        studentDetails = studentDetailsResult.Value;
+
+                        await ProcessReceipt(studentDetails, revenue, db, logger, fileGeneratorService);
+
+                        //notify parent via sms
+                        //already done on budget tracker - to be moved here later
+
+
+                        //create transactions
+                        //get id of default account
+                        Account? defaultBankAccount = await GetDefaultAccountId(revenue.payment_method, db);
+                        Account? defaultFeeAccount = await GetDefaultAccountId(PaymentMethod.InternalTransaction, db);
+                        if (defaultBankAccount == null || defaultFeeAccount == null)
+                        {
+                            logger.LogWarning("Default accounts not set.");
+
+                            revenue.status = RevenueStatus.TransactionPending;
+                        }
+                        else
+                        {
+                            Transaction transaction = new Transaction()
+                            {
+                                amount = revenue.amount,
+                                description = "School Fee Paid",
+                                reference_id = revenue.payment_reference,
+                                created_by = "0",
+                                transaction_type = TransactionType.FeeReceived,
+                                fk_transaction_type_identifier = studentDetails.id,
+                            };
+
+                            db.Transaction.Add(transaction);
+                            await db.SaveChangesAsync();
+
+                            db.JournalEntry.Add(new JournalEntry()
+                            {
+                                amount = revenue.amount,
+                                fk_account_id = defaultBankAccount.id, //main bank
+                                fk_transaction_id = transaction.id,
+                                fk_journal_entry_type = (int)JournalEntryType.Debit
+                            });
+
+                            db.JournalEntry.Add(new JournalEntry()
+                            {
+                                amount = revenue.amount,
+                                fk_account_id = defaultFeeAccount.id, //fees TODO: get account id for fees
+                                fk_transaction_id = transaction.id,
+                                fk_journal_entry_type = (int)JournalEntryType.Credit
+                            });
+
+                            revenue.status = RevenueStatus.Allocated;
+                            revenue.fk_intended_account_number = studentDetails.id;
+
+                            defaultBankAccount.balance += revenue.amount;
+                            defaultFeeAccount.balance -= revenue.amount;
+                            db.Update(defaultFeeAccount);
+                            db.Update(defaultFeeAccount);
+                            await db.SaveChangesAsync();
+                        }
+                    }
+
+                    db.Revenue.Update(revenue);
+                    await db.SaveChangesAsync();
+
+                    return TypedResults.Created($"/api/Finance/{revenue}", revenue);
+                })
+            .WithName("ProcessRevenueCollection")
+            .WithOpenApi();
+
+        //record manual fee payement
+        group.MapPost("/Revenue/ManualUpdate", async Task<Results<Created<RevenueWithStudentDto>, NotFound<string>>>
+                (int revenueId, int studentId, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
             {
-                logger.LogWarning(studentDetailsResult.Error);
-            }
-            else
-            {
-                studentDetails = studentDetailsResult.Value;
+                //check if account number valid
+                Student studentDetails = db.Student.AsNoTracking()
+                    .FirstOrDefault(s => s.id == studentId);
+
+                if (studentDetails == null)
+                {
+                    return TypedResults.NotFound("Student not found.");
+                }
+
+                Revenue revenue = db.Revenue.AsNoTracking()
+                    .FirstOrDefault(r => r.id == revenueId);
+
+                if (revenue == null)
+                {
+                    return TypedResults.NotFound("Revenue not found.");
+                }
+
 
                 await ProcessReceipt(studentDetails, revenue, db, logger, fileGeneratorService);
 
                 //notify parent via sms
                 //already done on budget tracker - to be moved here later
 
-
                 //create transactions
                 //get id of default account
-                Account defaultBankAccount = GetDefaultAccountId(revenue.payment_method, db);
-                Account defaultFeeAccount = GetDefaultAccountId(PaymentMethod.InternalTransaction, db);
+                Account? defaultBankAccount = await GetDefaultAccountId(revenue.payment_method, db);
+                Account? defaultFeeAccount = await GetDefaultAccountId(PaymentMethod.InternalTransaction, db);
                 if (defaultBankAccount == null || defaultFeeAccount == null)
                 {
                     logger.LogWarning("Default accounts not set.");
@@ -106,435 +195,356 @@ public static class AccountingEndpoints
                     db.Update(defaultFeeAccount);
                     await db.SaveChangesAsync();
                 }
-            }
-
-            db.Revenue.Update(revenue);
-            await db.SaveChangesAsync();
-
-            return TypedResults.Created($"/api/Finance/{revenue}", revenue);
-        })
-        .WithName("ProcessRevenueCollection")
-        .WithOpenApi();
-
-        //record manual fee payement
-        group.MapPost("/Revenue/ManualUpdate", async Task<Results<Created<RevenueWithStudentDto>, NotFound<string>>>
-            (int revenueId, int studentId, ShuleOneDatabaseContext db, FileGeneratorService fileGeneratorService) =>
-        {
-
-            //check if account number valid
-            Student studentDetails = db.Student.AsNoTracking()
-                .FirstOrDefault(s => s.id == studentId);
-
-            if (studentDetails == null)
-            {
-                return TypedResults.NotFound("Student not found.");
-            }
-
-            Revenue revenue = db.Revenue.AsNoTracking()
-                .FirstOrDefault(r => r.id == revenueId);
-
-            if (revenue == null)
-            {
-                return TypedResults.NotFound("Revenue not found.");
-            }
 
 
-            await ProcessReceipt(studentDetails, revenue, db, logger, fileGeneratorService);
-
-            //notify parent via sms
-            //already done on budget tracker - to be moved here later
-
-            //create transactions
-            //get id of default account
-            Account defaultBankAccount = GetDefaultAccountId(revenue.payment_method, db);
-            Account defaultFeeAccount = GetDefaultAccountId(PaymentMethod.InternalTransaction, db);
-            if (defaultBankAccount == null || defaultFeeAccount == null)
-            {
-                logger.LogWarning("Default accounts not set.");
-
-                revenue.status = RevenueStatus.TransactionPending;
-            }
-            else
-            {
-                Transaction transaction = new Transaction()
-                {
-                    amount = revenue.amount,
-                    description = "School Fee Paid",
-                    reference_id = revenue.payment_reference,
-                    created_by = "0",
-                    transaction_type = TransactionType.FeeReceived,
-                    fk_transaction_type_identifier = studentDetails.id,
-                };
-
-                db.Transaction.Add(transaction);
+                db.Revenue.Update(revenue);
                 await db.SaveChangesAsync();
 
-                db.JournalEntry.Add(new JournalEntry()
-                {
-                    amount = revenue.amount,
-                    fk_account_id = defaultBankAccount.id, //main bank
-                    fk_transaction_id = transaction.id,
-                    fk_journal_entry_type = (int)JournalEntryType.Debit
-                });
 
-                db.JournalEntry.Add(new JournalEntry()
-                {
-                    amount = revenue.amount,
-                    fk_account_id = defaultFeeAccount.id, //fees TODO: get account id for fees
-                    fk_transaction_id = transaction.id,
-                    fk_journal_entry_type = (int)JournalEntryType.Credit
-                });
+                RevenueWithStudentDto revenueDetails = db.Revenue
+                    .AsNoTracking()
+                    .Join(
+                        db.Student,
+                        revenue => revenue.fk_intended_account_number,
+                        student => student.id,
+                        (revenue, student) => new RevenueWithStudentDto
+                        {
+                            Revenue = revenue,
+                            Student = student
+                        }
+                    )
+                    .Where(s => s.Revenue.id == revenue.id)
+                    .OrderBy(s => s.Revenue.id)
+                    .FirstOrDefault();
 
-                revenue.status = RevenueStatus.Allocated;
-                revenue.fk_intended_account_number = studentDetails.id;
-
-                defaultBankAccount.balance += revenue.amount;
-                defaultFeeAccount.balance -= revenue.amount;
-                db.Update(defaultFeeAccount);
-                db.Update(defaultFeeAccount);
-                await db.SaveChangesAsync();
-            }
-
-
-            db.Revenue.Update(revenue);
-            await db.SaveChangesAsync();
-
-
-            RevenueWithStudentDto revenueDetails = db.Revenue
-                .AsNoTracking()
-                .Join(
-                    db.Student,
-                    revenue => revenue.fk_intended_account_number,
-                    student => student.id,
-                    (revenue, student) => new RevenueWithStudentDto
-                    {
-                        Revenue = revenue,
-                        Student = student
-                    }
-                )
-                .Where(s => s.Revenue.id == revenue.id)
-                .OrderBy(s => s.Revenue.id)
-                .FirstOrDefault();
-
-            return TypedResults.Created($"/api/Finance", revenueDetails);
-        })
-        .WithName("ProcessManualRevenueCollection")
-        .WithOpenApi();
+                return TypedResults.Created($"/api/Finance", revenueDetails);
+            })
+            .WithName("ProcessManualRevenueCollection")
+            .WithOpenApi();
 
         //download receipt
         group.MapGet("/Receipt/{receiptId}", async
-            (int revenueId, ShuleOneDatabaseContext db, IOptionsMonitor<ReportSettings> reportSettings, FileGeneratorService fileGeneratorService) =>
-        {
-            var receipt = db.Receipts.AsNoTracking().FirstOrDefault(r => r.id == revenueId);
-            if (receipt == null)
+            (int revenueId, ShuleOneDatabaseContext db, IOptionsMonitor<ReportSettings> reportSettings,
+                FileGeneratorService fileGeneratorService) =>
             {
-                logger.LogWarning("Receipt record not found.");
-                return TypedResults.NotFound("Receipt record not found.");
-            }
-
-            if (!IsFileLocationValid(receipt, reportSettings.CurrentValue.FileStoragePath))
-            {
-                logger.LogWarning("Receipt file not found.");
-                return TypedResults.NotFound("Receipt file not found.");
-            }
-
-            if (receipt.file_location == null)
-            {
-                //generate receipt
-                var studentDetails = db.Student.AsNoTracking().FirstOrDefault(s => s.id == receipt.fk_student_id);
-                var revenue = db.Revenue.AsNoTracking().FirstOrDefault(r => r.id == receipt.fk_revenue_id);
-
-                if (studentDetails == null)
+                var receipt = db.Receipts.AsNoTracking().FirstOrDefault(r => r.id == revenueId);
+                if (receipt == null)
                 {
-                    return TypedResults.NotFound("Student details not found.");
+                    logger.LogWarning("Receipt record not found.");
+                    return TypedResults.NotFound("Receipt record not found.");
                 }
 
-                if (revenue == null)
+                if (!IsFileLocationValid(receipt, reportSettings.CurrentValue.FileStoragePath))
                 {
-                    return TypedResults.NotFound("Revenue record not found.");
+                    logger.LogWarning("Receipt file not found.");
+                    return TypedResults.NotFound("Receipt file not found.");
                 }
 
-                var generateReceiptFileResult = GenerateReceiptFile(logger, studentDetails, receipt, revenue, fileGeneratorService, db);
-
-                //update receipt record with file location
-                if (generateReceiptFileResult.IsSuccess)
+                if (receipt.file_location == null)
                 {
-                    receipt.file_location = generateReceiptFileResult.Value;
-                    receipt.file_location_type = FileLocationType.Local;
-                    db.Receipts.Update(receipt);
-                    await db.SaveChangesAsync();
+                    //generate receipt
+                    var studentDetails = db.Student.AsNoTracking().FirstOrDefault(s => s.id == receipt.fk_student_id);
+                    var revenue = db.Revenue.AsNoTracking().FirstOrDefault(r => r.id == receipt.fk_revenue_id);
+
+                    if (studentDetails == null)
+                    {
+                        return TypedResults.NotFound("Student details not found.");
+                    }
+
+                    if (revenue == null)
+                    {
+                        return TypedResults.NotFound("Revenue record not found.");
+                    }
+
+                    var generateReceiptFileResult = GenerateReceiptFile(logger, studentDetails, receipt, revenue,
+                        fileGeneratorService, db);
+
+                    //update receipt record with file location
+                    if (generateReceiptFileResult.IsSuccess)
+                    {
+                        receipt.file_location = generateReceiptFileResult.Value;
+                        receipt.file_location_type = FileLocationType.Local;
+                        db.Receipts.Update(receipt);
+                        await db.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        return TypedResults.NotFound("Error generating receipt file.");
+                    }
                 }
-                else
+
+                if (receipt.file_location == null)
                 {
-                    return TypedResults.NotFound("Error generating receipt file.");
+                    return TypedResults.NotFound("File not found.");
                 }
-            }
 
-            if (receipt.file_location == null)
-            {
-                return TypedResults.NotFound("File not found.");
-            }
-
-            var filePath = receipt.file_location;
-            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            return Results.File(fileStream, "application/pdf", Path.GetFileName(receipt.file_location));
-        })
-        .WithName("GetReceipt")
-        .WithOpenApi();
+                var filePath = receipt.file_location;
+                var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                return Results.File(fileStream, "application/pdf", Path.GetFileName(receipt.file_location));
+            })
+            .WithName("GetReceipt")
+            .WithOpenApi();
 
         //add expense
-        group.MapPost("/Expense", async Task<Results<Created<ExpenseDto>, NotFound<string>>>
-            ([FromForm] ExpenseDto expenseDto, ShuleOneDatabaseContext db, IOptionsMonitor<Settings> settings, IMapper mapper) =>
-        {
-            if (expenseDto.fk_from_account_id == 0)
+        group.MapPost("/Expense", async Task<Results<Created<ExpenseDto>, NotFound<string>, ProblemHttpResult>>
+            ([FromForm] ExpenseDto expenseDto, ShuleOneDatabaseContext db, IOptionsMonitor<Settings> settings,
+                IMapper mapper) =>
             {
-                Account defaultBankAccount = GetDefaultAccountId(PaymentMethod.Mpesa, db);
-                if (defaultBankAccount == null)
+                var strategy = db.Database.CreateExecutionStrategy();
+
+                return await strategy.ExecuteAsync(async
+                    Task<Results<Created<ExpenseDto>, NotFound<string>, ProblemHttpResult>> () =>
                 {
-                    return TypedResults.NotFound("Default accounts not set.");
-                }
-                else
-                {
-                    expenseDto.fk_from_account_id = defaultBankAccount.id;
-                }
-            }
+                    await using var trx = await db.Database.BeginTransactionAsync();
 
-            var fromAccount = await db.Account
-                .FirstOrDefaultAsync(a => a.id == expenseDto.fk_from_account_id);
+                    try
+                    {
+                        if (expenseDto.fk_from_account_id == 0)
+                        {
+                            Account? defaultBankAccount = await db.Account
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync(a => a.default_source == PaymentMethod.Mpesa);
+                            if (defaultBankAccount == null)
+                                return TypedResults.NotFound("Default accounts not set.");
 
-            if (fromAccount == null)
-            {
-                return TypedResults.NotFound("From account not found.");
-            }
-            
-            //get to-account with category ie the expense account
-            //TODO add checks for if expense category exist and has account
-            var expenseSubCategory = await db.ExpensesSubcategory.Where(es => es.id == expenseDto.fk_expense_subcategory_id).FirstAsync();
-            var expenseCategoryAccount = await db.ExpensesCategory.Where(e => e.id == expenseSubCategory.fk_expense_category_id).FirstAsync();
+                            expenseDto.fk_from_account_id = defaultBankAccount.id;
+                        }
 
-            expenseDto.fk_to_account_id = expenseCategoryAccount.id;
-            logger.LogInformation("expense to Account: " + expenseCategoryAccount.fk_account_id);
-            logger.LogInformation("expense sub Account: " + expenseSubCategory.id);
-            logger.LogInformation("expense fk_expense_subcategory_id: " + expenseDto.fk_expense_subcategory_id);
-            
-            var toAccount = await db.Account
-                .FirstOrDefaultAsync(a => a.id == expenseCategoryAccount.fk_account_id);
-            if (toAccount == null)
-            {
-                return TypedResults.NotFound("To account not found.");
-            }
-            
-            Transaction transaction = new Transaction()
-            {
-                amount = expenseDto.amount,
-                description = expenseDto.description,
-                reference_id = expenseDto.payment_reference,
-                created_by = "0",
-                transaction_type = TransactionType.ExpensePaid,
-                fk_transaction_type_identifier = expenseDto.fk_to_account_id,
-            };
+                        var fromAccount =
+                            await db.Account.FirstOrDefaultAsync(a => a.id == expenseDto.fk_from_account_id);
+                        if (fromAccount == null)
+                            return TypedResults.NotFound("From account not found.");
 
-            db.Transaction.Add(transaction);
-            await db.SaveChangesAsync(); // Ensure transaction.id is available
+                        var expenseSubCategory = await db.ExpensesSubcategory
+                            .FirstOrDefaultAsync(es => es.id == expenseDto.fk_expense_subcategory_id);
+                        if (expenseSubCategory == null)
+                            return TypedResults.NotFound("Expense subcategory not found.");
 
-            //upload receipt 
-            string recieptLocation = "";
-            if(expenseDto.reciept != null)
-            {
-                var filePath = settings.CurrentValue.ReceiptLocation;
-                
-                recieptLocation = $"{filePath}/{expenseDto.description}_{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}_{expenseDto.reciept.FileName.ToString()}";
+                        var expenseCategoryAccount = await db.ExpensesCategory
+                            .FirstOrDefaultAsync(e => e.id == expenseSubCategory.fk_expense_category_id);
+                        if (expenseCategoryAccount == null || expenseCategoryAccount.fk_account_id == null)
+                            return TypedResults.NotFound("Expense category is misconfigured.");
 
-                if (!Directory.Exists(recieptLocation)) { Directory.CreateDirectory(Path.GetDirectoryName(recieptLocation)); }; // Ensure folder exists
+                        expenseDto.fk_to_account_id = expenseCategoryAccount.id;
 
-                using (var stream = new FileStream(recieptLocation, FileMode.Create))
-                {
-                    await expenseDto.reciept.CopyToAsync(stream);
-                }
-            }
-            
-            //record expense
-            expenseDto.fk_transaction_id = transaction.id;
-            Expense expense = new Expense()
-            {
-                amount = expenseDto.amount,
-                description = expenseDto.description,
-                date_created = DateTime.UtcNow,
-                date_paid = expenseDto.date_paid,
-                fk_from_account_id = expenseDto.fk_from_account_id,
-                fk_to_account_id = expenseDto.fk_to_account_id,
-                fk_transaction_id = expenseDto.fk_transaction_id,
-                fk_expense_subcategory_id = expenseDto.fk_expense_subcategory_id,
-                paid_by = expenseDto.paid_by,
-                payment_reference = expenseDto.payment_reference,
-                reciept = recieptLocation 
-            };
+                        var toAccount =
+                            await db.Account.FirstOrDefaultAsync(a => a.id == expenseCategoryAccount.fk_account_id);
+                        if (toAccount == null)
+                            return TypedResults.NotFound("To account not found.");
 
-            await db.Expenses.AddAsync(expense);
-            await db.SaveChangesAsync(); // Ensure transaction.id is available
+                        var transaction = new Transaction()
+                        {
+                            amount = expenseDto.amount,
+                            description = expenseDto.description,
+                            reference_id = expenseDto.payment_reference,
+                            created_by = "0",
+                            transaction_type = TransactionType.ExpensePaid,
+                            fk_transaction_type_identifier = expenseDto.fk_to_account_id,
+                        };
 
+                        db.Transaction.Add(transaction);
+                        await db.SaveChangesAsync();
 
-            db.JournalEntry.AddRange(new List<JournalEntry>
-            {
-                new JournalEntry()
-                {
-                    amount = expenseDto.amount,
-                    fk_account_id = expenseDto.fk_from_account_id, // Main bank
-                    fk_transaction_id = transaction.id,
-                    fk_journal_entry_type = (int)JournalEntryType.Credit
-                },
-                new JournalEntry()
-                {
-                    amount = expenseDto.amount,
-                    fk_account_id = expenseDto.fk_to_account_id, // Fees
-                    fk_transaction_id = transaction.id,
-                    fk_journal_entry_type = (int)JournalEntryType.Debit
-                }
-            });
+                        string recieptLocation = "";
+                        if (expenseDto.recieptRaw != null)
+                        {
+                            var filePath = settings.CurrentValue.ReceiptLocation;
+                            recieptLocation = Path.Combine(filePath,
+                                $"{expenseDto.description}_{DateTime.UtcNow:yyyyMMddHHmmss}_{expenseDto.recieptRaw.FileName}");
+                            var dir = Path.GetDirectoryName(recieptLocation);
+                            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
-   
-            // var fromAccountEntity = await db.Account.FindAsync(expenseDto.fk_from_account_id);
-            // var toAccountEntity = await db.Account.FindAsync(expenseDto.fk_to_account_id);
+                            using var stream = new FileStream(recieptLocation, FileMode.Create);
+                            await expenseDto.recieptRaw.CopyToAsync(stream);
+                        }
 
-            var fromAccountNewBalance = fromAccount.balance - expenseDto.amount;
-            var toAccountNewBalance = toAccount.balance + expenseDto.amount;
-            fromAccount.balance = fromAccountNewBalance;
-            toAccount.balance = toAccountNewBalance;
-            db.Update(fromAccount);
-            db.Update(toAccount);
-            
-            await db.SaveChangesAsync();
+                        var expense = new Expense()
+                        {
+                            amount = expenseDto.amount,
+                            description = expenseDto.description,
+                            date_created = DateTime.UtcNow,
+                            date_paid = expenseDto.date_paid,
+                            fk_from_account_id = expenseDto.fk_from_account_id,
+                            fk_to_account_id = expenseDto.fk_to_account_id,
+                            fk_transaction_id = transaction.id,
+                            fk_expense_subcategory_id = expenseDto.fk_expense_subcategory_id,
+                            paid_by = expenseDto.paid_by,
+                            payment_reference = expenseDto.payment_reference,
+                            reciept = recieptLocation
+                        };
 
-            //expenseDto = mapper.Map<ExpenseDto>(expense);
-            return TypedResults.Created($"/api/Finance/{expenseDto.id}", expenseDto);
-        })
-        .DisableAntiforgery() // This is the equivalent of [IgnoreAntiforgeryToken] for minimal APIs
-        .WithName("RecordExpense")
-        .WithOpenApi();
+                        await db.Expenses.AddAsync(expense);
+
+                        db.JournalEntry.AddRange(new List<JournalEntry>
+                        {
+                            new()
+                            {
+                                amount = expenseDto.amount,
+                                fk_account_id = expenseDto.fk_from_account_id,
+                                fk_transaction_id = transaction.id,
+                                fk_journal_entry_type = (int)JournalEntryType.Credit
+                            },
+                            new()
+                            {
+                                amount = expenseDto.amount,
+                                fk_account_id = expenseDto.fk_to_account_id,
+                                fk_transaction_id = transaction.id,
+                                fk_journal_entry_type = (int)JournalEntryType.Debit
+                            }
+                        });
+
+                        fromAccount.balance -= expenseDto.amount;
+                        toAccount.balance += expenseDto.amount;
+
+                        db.Update(fromAccount);
+                        db.Update(toAccount);
+
+                        await db.SaveChangesAsync();
+                        await trx.CommitAsync();
+
+                        return TypedResults.Created($"/api/Finance/{expense.id}", mapper.Map<ExpenseDto>(expense));
+                    }
+                    catch (Exception ex) when (IsTransactionRelated(ex))
+                    {
+                        await trx.RollbackAsync();
+                        return TypedResults.Problem($"Transaction failed: {ex.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // await trx.RollbackAsync();
+                        return TypedResults.Problem($"Database operations successful but with unrealted error: {ex.Message}");
+                    }
+                });
+            })
+            .DisableAntiforgery()
+            .WithName("RecordExpense")
+            .WithOpenApi();
+
 
         //get expenses
         group.MapGet("/Expense/All", async
-            (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1) =>
-        {
-            var allExpensesCount = 0;
-
-            var query = db.Expenses
-                .AsNoTracking()
-                .OrderBy(c => c.id)
-                .AsQueryable();
-
-            // Apply filters dynamically based on the provided parameters
-            // TODO
-
-            // Count the total records for pagination
-            allExpensesCount = await query.CountAsync();
-
-            // Apply pagination and projection to DTO
-            var allExpenses = await query
-                .Skip(pageNumber * pageSize)
-                .Take(pageSize)
-                .OrderByDescending(e => e.date_paid)
-                .ToListAsync();
-
-            // Return results including pagination metadata
-            return Results.Ok(new
+                (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1) =>
             {
-                total = allExpensesCount,
-                expenses = allExpenses
-            });
-        })
-        .WithName("GetExpenseRecordsPaginated")
-        .WithOpenApi();
+                var allExpensesCount = 0;
+
+                var query = db.Expenses
+                    .AsNoTracking()
+                    .OrderBy(c => c.id)
+                    .AsQueryable();
+
+                // Apply filters dynamically based on the provided parameters
+                // TODO
+
+                // Count the total records for pagination
+                allExpensesCount = await query.CountAsync();
+
+                // Apply pagination and projection to DTO
+                var allExpenses = await query
+                    .Skip(pageNumber * pageSize)
+                    .Take(pageSize)
+                    .OrderByDescending(e => e.date_paid)
+                    .ToListAsync();
+
+                // Return results including pagination metadata
+                return Results.Ok(new
+                {
+                    total = allExpensesCount,
+                    expenses = allExpenses
+                });
+            })
+            .WithName("GetExpenseRecordsPaginated")
+            .WithOpenApi();
 
         //get revenues
         group.MapGet("/Revenue/All", async
             (ShuleOneDatabaseContext db, IMapper mapper, int pageNumber = 0, int pageSize = 1,
-            string? account = null, string? transactionRef = null, DateTime? dateFrom = null, DateTime? dateTo = null) =>
-        {
-            var allRevenueCount = 0;
-
-            var query = db.Revenue
-                .AsNoTracking()
-                .GroupJoin(
-                    db.Student,
-                    revenue => revenue.fk_intended_account_number,
-                    student => student.id,
-                    (revenue, student) => new { Revenue = revenue, Student = student.First() } // Left join effect
-                )
-                .OrderByDescending(r => r.Revenue.payment_date)
-                .AsQueryable();
-
-
-            // Apply filters dynamically based on the provided parameters
-            if (account is not null)
+                string? account = null, string? transactionRef = null, DateTime? dateFrom = null,
+                DateTime? dateTo = null) =>
             {
-                query = query.Where(s => s.Revenue.account_number == account);
-            }
-            if (transactionRef is not null)
-            {
-                query = query.Where(s => s.Revenue.payment_reference == transactionRef);
-            }
-            if (dateFrom != null || dateTo != null)
-            {
-                query = query.Where(s => s.Revenue.payment_date >= dateFrom && s.Revenue.payment_date <= dateTo);
-            }
+                var allRevenueCount = 0;
 
-            // Count the total records for pagination
-            allRevenueCount = await query.CountAsync();
+                var query = db.Revenue
+                    .AsNoTracking()
+                    .GroupJoin(
+                        db.Student,
+                        revenue => revenue.fk_intended_account_number,
+                        student => student.id,
+                        (revenue, student) => new { Revenue = revenue, Student = student.First() } // Left join effect
+                    )
+                    .OrderByDescending(r => r.Revenue.payment_date)
+                    .AsQueryable();
 
-            // Apply pagination and projection to DTO
-            var allRevenue = await query
-                .Skip(pageNumber * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
 
-            // Return results including pagination metadata
-            return Results.Ok(new
-            {
-                total = allRevenueCount,
-                revenueStudentRecords = allRevenue
-            });
-        })
-        .WithName("GetRevenueRecordsPaginated")
-        .WithOpenApi();
+                // Apply filters dynamically based on the provided parameters
+                if (account is not null)
+                {
+                    query = query.Where(s => s.Revenue.account_number == account);
+                }
+
+                if (transactionRef is not null)
+                {
+                    query = query.Where(s => s.Revenue.payment_reference == transactionRef);
+                }
+
+                if (dateFrom != null || dateTo != null)
+                {
+                    query = query.Where(s => s.Revenue.payment_date >= dateFrom && s.Revenue.payment_date <= dateTo);
+                }
+
+                // Count the total records for pagination
+                allRevenueCount = await query.CountAsync();
+
+                // Apply pagination and projection to DTO
+                var allRevenue = await query
+                    .Skip(pageNumber * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                // Return results including pagination metadata
+                return Results.Ok(new
+                {
+                    total = allRevenueCount,
+                    revenueStudentRecords = allRevenue
+                });
+            })
+            .WithName("GetRevenueRecordsPaginated")
+            .WithOpenApi();
 
         group.MapGet("/CheckPayment", async (ShuleOneDatabaseContext db, string transactionReference) =>
-        {
-            var revenue = await db.Revenue.AsNoTracking()
-                .Where(r => r.payment_reference == transactionReference)
-                .FirstOrDefaultAsync();
+            {
+                var revenue = await db.Revenue.AsNoTracking()
+                    .Where(r => r.payment_reference == transactionReference)
+                    .FirstOrDefaultAsync();
 
-            return Results.Ok(new { status = revenue != null });
-        })
-        .WithName("CheckPayment")
-        .WithOpenApi();
+                return Results.Ok(new { status = revenue != null });
+            })
+            .WithName("CheckPayment")
+            .WithOpenApi();
 
         group.MapGet("/Expense/Categories", async (ShuleOneDatabaseContext db, IMapper mapper) =>
-        {
-            var expenseCategories = await db.ExpensesCategory
-                .Include(e => e.ExpenseSubCategories)
-                .ToListAsync();
+            {
+                var expenseCategories = await db.ExpensesCategory
+                    .Include(e => e.ExpenseSubCategories)
+                    .ToListAsync();
 
-            var categories = await db.ExpensesCategory
-                .Include(c => c.ExpenseSubCategories)
-                .ToListAsync();
+                var categories = await db.ExpensesCategory
+                    .Include(c => c.ExpenseSubCategories)
+                    .ToListAsync();
 
-            var result = mapper.Map<List<ExpenseCategoryDto>>(categories);
+                var result = mapper.Map<List<ExpenseCategoryDto>>(categories);
 
-            return Results.Ok(result);
-        })
-        .WithName("Get")
-        .WithOpenApi();
-      
-    
+                return Results.Ok(result);
+            })
+            .WithName("Get")
+            .WithOpenApi();
     }
 
 
     #region Helper procedures
 
-    private static Account? GetDefaultAccountId(PaymentMethod paymentMethod, ShuleOneDatabaseContext db)
+    private async static Task<Account?> GetDefaultAccountId(PaymentMethod paymentMethod, ShuleOneDatabaseContext db)
     {
-        Account account = db.Account.AsNoTracking().FirstOrDefault(a => a.default_source == paymentMethod);
+        Account? account = await db.Account.AsNoTracking().FirstOrDefaultAsync(a => a.default_source == paymentMethod);
 
         if (account == null)
         {
@@ -545,7 +555,7 @@ public static class AccountingEndpoints
     }
 
     private static async Task ProcessReceipt
-        (Student studentDetails, Revenue revenue, ShuleOneDatabaseContext db,
+    (Student studentDetails, Revenue revenue, ShuleOneDatabaseContext db,
         ILogger logger, FileGeneratorService fileGeneratorService)
     {
         //create receipt record
@@ -571,7 +581,8 @@ public static class AccountingEndpoints
 
 
         //generate receipt
-        var generateReceiptFileResult = GenerateReceiptFile(logger, studentDetails, receipt, revenue, fileGeneratorService, db);
+        var generateReceiptFileResult =
+            GenerateReceiptFile(logger, studentDetails, receipt, revenue, fileGeneratorService, db);
 
 
         //update receipt record with file location
@@ -583,6 +594,7 @@ public static class AccountingEndpoints
             await db.SaveChangesAsync();
         }
     }
+
     private static Result<Student> GetStudentDetails(ShuleOneDatabaseContext db, string accountNumber)
     {
         if (string.IsNullOrEmpty(accountNumber))
@@ -655,7 +667,8 @@ public static class AccountingEndpoints
             };
 
             JObject reportDetails = JObject.FromObject(receiptDetails);
-            var generateFileResult = fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
+            var generateFileResult =
+                fileGeneratorService.GenerateFile(reportDetails, fileName, outputFilePath, templateFileName);
 
             if (generateFileResult.IsCompletedSuccessfully)
             {
@@ -672,5 +685,13 @@ public static class AccountingEndpoints
             return Result.Failure<string>("Error generating file.");
         }
     }
+
+    static bool IsTransactionRelated(Exception ex)
+    {
+        return ex is DbUpdateException ||
+               // ex is MySqlException ||
+               (ex is InvalidOperationException && ex.Message.Contains("transaction"));
+    }
+
     #endregion
 }

@@ -212,7 +212,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         public string paid_by { get; set; }
         public DateTime date_paid { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
-        public IFormFile reciept { get; set; }
+        public IFormFile recieptRaw { get; set; }
     }
 
 

@@ -78,7 +78,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("rabbitmq", h => // Use the container name as the host inside the Docker network
+        cfg.Host("127.0.0.1", h => // Use the container name as the host inside the Docker network
         {
             h.Username("guest");
             h.Password("guest");
