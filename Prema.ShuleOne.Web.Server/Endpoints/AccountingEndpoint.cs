@@ -372,7 +372,7 @@ public static class AccountingEndpoints
                             payment_reference = expenseDto.payment_reference,
                             reciept = recieptLocation
                         };
-
+                        
                         await db.Expenses.AddAsync(expense);
 
                         db.JournalEntry.AddRange(new List<JournalEntry>
@@ -380,14 +380,14 @@ public static class AccountingEndpoints
                             new()
                             {
                                 amount = expenseDto.amount,
-                                fk_account_id = expenseDto.fk_from_account_id,
+                                fk_account_id = fromAccount.id,
                                 fk_transaction_id = transaction.id,
                                 fk_journal_entry_type = (int)JournalEntryType.Credit
                             },
                             new()
                             {
                                 amount = expenseDto.amount,
-                                fk_account_id = expenseDto.fk_to_account_id,
+                                fk_account_id = toAccount.id,
                                 fk_transaction_id = transaction.id,
                                 fk_journal_entry_type = (int)JournalEntryType.Debit
                             }
