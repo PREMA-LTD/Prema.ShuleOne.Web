@@ -11,6 +11,7 @@ import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Expense, ExpenseCategoryDto, ExpenseDto, ExpenseSubCategoryDto } from 'app/models/finance.model';
 import { AccountingService } from 'app/service/accounting.service';
+import {FileCompressionService} from "../../../../service/file-compression.service";
 
 
 @Component({
@@ -33,6 +34,7 @@ export class AddExpenseComponent {
     });
   }
     private readonly accountingService = inject(AccountingService);
+    private readonly fileCompressionService = inject(FileCompressionService);
 
     expense: Expense = {
       description: '',
@@ -57,15 +59,30 @@ export class AddExpenseComponent {
 
 
 
-    onFileSelected(event: any) {
-      const file = event.target.files[0];
-      if (file) {
-        this.selectedFile = file;
-        // You can also preview if it's an image
-        console.log('Selected file:', file);
-      }
-    }
+    // onFileSelected(event: any) {
+    //   const file = event.target.files[0];
+    //   if (file) {
+    //     this.selectedFile = file;
+    //     // You can also preview if it's an image
+    //     console.log('Selected file:', file);
+    //   }
+    // }
 
+    async onFileSelected(event: any) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      let finalFile = file;
+
+      // Only compress if mobile AND image AND large
+      // if (this.isMobile() && file.type.startsWith('image/') && file.size > 2 * 1024 * 1024) {
+        console.log(`File detected: ${(file.size / 1024 / 1024).toFixed(2)}MB - compressing...`);
+        finalFile = await this.fileCompressionService.compressFile(file);
+        console.log(`Compressed to: ${(finalFile.size / 1024 / 1024).toFixed(2)}MB`);
+      // }
+
+      this.selectedFile = finalFile;
+    }
     async onSubmit() {
       // Create a FormData object for multipart/form-data submission
       const formData = new FormData();
