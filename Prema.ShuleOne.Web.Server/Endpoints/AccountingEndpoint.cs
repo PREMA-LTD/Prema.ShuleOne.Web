@@ -544,7 +544,7 @@ public static class AccountingEndpoints
 
     private async static Task<Account?> GetDefaultAccountId(PaymentMethod paymentMethod, ShuleOneDatabaseContext db)
     {
-        Account? account = await db.Account.AsNoTracking().FirstOrDefaultAsync(a => a.default_source == paymentMethod);
+        Account? account = await db.Account.FirstOrDefaultAsync(a => a.default_source == paymentMethod);
 
         if (account == null)
         {
