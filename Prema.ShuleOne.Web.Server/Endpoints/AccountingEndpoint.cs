@@ -223,17 +223,17 @@ public static class AccountingEndpoints
             .WithOpenApi();
 
         //download receipt
-        group.MapGet("/Receipt/{receiptId}", async
+        group.MapGet("/Receipt/{revenueId}", async
             (int revenueId, ShuleOneDatabaseContext db, IOptionsMonitor<ReportSettings> reportSettings,
                 FileGeneratorService fileGeneratorService) =>
             {
-                var receipt = db.Receipts.AsNoTracking().FirstOrDefault(r => r.id == revenueId);
+                var receipt = db.Receipts.AsNoTracking().FirstOrDefault(r => r.fk_revenue_id == revenueId);
                 if (receipt == null)
                 {
                     logger.LogWarning("Receipt record not found.");
                     return TypedResults.NotFound("Receipt record not found.");
                 }
-
+                
                 if (!IsFileLocationValid(receipt, reportSettings.CurrentValue.FileStoragePath))
                 {
                     logger.LogWarning("Receipt file not found.");
@@ -278,7 +278,7 @@ public static class AccountingEndpoints
                     return TypedResults.NotFound("File not found.");
                 }
 
-                var filePath = receipt.file_location;
+                var filePath = Path.Combine(reportSettings.CurrentValue.FileStoragePath, receipt.file_location);
                 var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
                 return Results.File(fileStream, "application/pdf", Path.GetFileName(receipt.file_location));
             })
@@ -630,10 +630,11 @@ public static class AccountingEndpoints
 
     public static bool IsFileLocationValid(Receipt receipt, string baseFileStoragePath)
     {
+        string fullPath = Path.Combine(baseFileStoragePath, receipt.file_location);
         switch (receipt.file_location_type)
         {
             case FileLocationType.Local:
-                return File.Exists(receipt.file_location);
+                return File.Exists(fullPath);
             default:
                 return false;
         }

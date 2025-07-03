@@ -31,7 +31,7 @@ export class AccountingService {
     }
     return '';
   }
-  
+
   async getRevenuePaginated(page: number, perPage: number, account: number | undefined | null = null, transactionRef: string | undefined | null, dateFrom: Date | undefined | null = null, dateTo: | undefined | null = null): Promise<Observable<RevenueStudentRecordsPagination>> {
     // if(this.keycloakService.isUserInRole("super-admin") || this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("finance")){
     let parameters = ``;
@@ -48,10 +48,10 @@ export class AccountingService {
       parameters += `&dateFrom=${dateFrom}&dateTo=${dateTo}`;
     }
 
-    if (parameters != ``){ 
-      return this.http.get<RevenueStudentRecordsPagination>(`${this.apiUrl}/Revenue/All?pageNumber=${page}&pageSize=${perPage}${parameters}`);    
-    } else {      
-      return this.http.get<RevenueStudentRecordsPagination>(`${this.apiUrl}/Revenue/All?pageNumber=${page}&pageSize=${perPage}`); 
+    if (parameters != ``){
+      return this.http.get<RevenueStudentRecordsPagination>(`${this.apiUrl}/Revenue/All?pageNumber=${page}&pageSize=${perPage}${parameters}`);
+    } else {
+      return this.http.get<RevenueStudentRecordsPagination>(`${this.apiUrl}/Revenue/All?pageNumber=${page}&pageSize=${perPage}`);
     }
   }
 
@@ -60,22 +60,22 @@ export class AccountingService {
     const params = new HttpParams()
       .set('studentId', studentId.toString())
       .set('revenueId', revenueId.toString());
-  
+
     const response = await this.http.post<RevenueStudentRecord>(url, null, { params }).toPromise();
-  
+
     if (response === undefined) {
       throw new Error("API returned an undefined response");
     }
-  
+
     return response;
   }
-  
+
   async checkPaymentStatus(transactionRef: boolean): Promise<boolean> {
     try {
       const result = await this.http
         .get<{ status: boolean }>(`${this.apiUrl}/CheckPayment?transactionReference=${transactionRef}`)
         .toPromise();
-  
+
         return result?.status ?? false; // fallback to false if result is null or undefined
     } catch (error) {
       console.error('Failed to check payment status:', error);
@@ -88,7 +88,7 @@ export class AccountingService {
       return this.http.get<ExpensePagination>(`${this.apiUrl}/Expense/All?pageNumber=${page}&pageSize=${perPage}`);
     // }
   }
-  
+
   async createExpense(formData: FormData) {
     return this.http.post<ExpenseDto>(`${this.apiUrl}/Expense`, formData)
       .pipe(
@@ -99,15 +99,18 @@ export class AccountingService {
       ).toPromise();
   }
 
-  
   async getExpenseCategories(): Promise<Observable<ExpenseCategoryDto[]>> {
       return this.http.get<ExpenseCategoryDto[]>(`${this.apiUrl}/Expense/Categories`);
   }
-  
+
+  getReceipt(revenueId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/Receipt/${revenueId}`, { responseType: 'blob' });
+  }
+
   // createExpense(formData: FormData): Observable<ExpenseDto> {
   //   // Get the anti-forgery token from the cookie (if available)
   //   const token = this.getAntiForgeryToken();
-    
+
   //   // Create headers with the anti-forgery token
   //   const headers = new HttpHeaders({
   //     'X-XSRF-TOKEN': token

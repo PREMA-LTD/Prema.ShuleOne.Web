@@ -1,6 +1,6 @@
 import { Student } from "./student.model";
 
-interface Revenue {
+export interface Revenue {
     id: number;
     amount: number;
     paid_by: string;

@@ -8,7 +8,7 @@ import { Student } from 'app/models/student.model';
 import { KeycloakService } from 'keycloak-angular';
 import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/mpesa-stk-push.component';
 import { AccountingService } from 'app/service/accounting.service';
-import { RevenueStudentRecord } from 'app/models/finance.model';
+import { RevenueStudentRecord, Revenue } from 'app/models/finance.model';
 import { FinanceFeePaymentComponent } from '../assign-fee-payment/assign-fee-payment.component';
 
 @Component({
@@ -20,7 +20,7 @@ export class FinanceFeeReceivedComponent implements OnInit {
 
   constructor(public dialog: MatDialog) {}
 
-  
+
   private readonly accountingService = inject(AccountingService);
   private readonly keycloakService = inject(KeycloakService);
 
@@ -52,7 +52,7 @@ export class FinanceFeeReceivedComponent implements OnInit {
         }
       },
       { header: 'Surname', field: 'student.surname' },
-      { header: 'Other Names', field: 'student.other_names' },    
+      { header: 'Other Names', field: 'student.other_names' },
       {
         header: 'Grade',
         field: 'student.current_grade',
@@ -89,12 +89,12 @@ export class FinanceFeeReceivedComponent implements OnInit {
                     return data.student.current_grade;
             }
         }
-    },  
+    },
     {
       header: 'Action',
       field: 'action',
       type: 'button',
-      buttons: [    
+      buttons: [
         {
           text: 'Assign Payment.',
           color: 'primary',
@@ -102,7 +102,15 @@ export class FinanceFeeReceivedComponent implements OnInit {
           //iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
           iif: (record: RevenueStudentRecord) => record.student === null,
           click: (record: RevenueStudentRecord) => this.openFeeAssignDialog(record)
-        }  
+        },
+        {
+          text: 'Receipt',
+          color: 'primary',
+          icon: 'download',
+          //iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
+          iif: (record: RevenueStudentRecord) => record.student != null,
+          click: (record: RevenueStudentRecord) => this.downloadReceipt(record)
+        }
       ]
     }
   ];
@@ -148,10 +156,10 @@ export class FinanceFeeReceivedComponent implements OnInit {
     this.query.grade = 0;
     this.getRevenueRecords();
   }
-  
+
   async getRevenueRecords() {
     this.isLoading = true;
-    
+
     (await this.accountingService
       .getRevenuePaginated(this.query.page, this.query.per_page, this.query.account, this.query.transactionRef, this.query.dateFrom, this.query.dateTo))
       .pipe(
@@ -174,7 +182,7 @@ export class FinanceFeeReceivedComponent implements OnInit {
 openFeeAssignDialog(revenueRecord: RevenueStudentRecord): void {
     const dialogRef = this.dialog.open(FinanceFeePaymentComponent, {
       width: '400px',
-      data: { 
+      data: {
         revenueId: revenueRecord.revenue.id
       }
     });
@@ -185,6 +193,23 @@ openFeeAssignDialog(revenueRecord: RevenueStudentRecord): void {
         this.getRevenueRecords();
       }
     });
-  }  
+  }
+
+  downloadReceipt(revenueStudentRecord: RevenueStudentRecord): void {
+    this.accountingService.getReceipt(revenueStudentRecord.revenue.id).subscribe({
+      next: (blob: Blob) => {
+        const fileName = `receipt-${revenueStudentRecord.revenue.id}-${revenueStudentRecord.student?.id} ${revenueStudentRecord.student?.other_names} ${revenueStudentRecord.student?.surname}.pdf`;
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      },
+      error: (err) => {
+        console.error('Download failed', err);
+      }
+    });
+  }
+
 
 }
