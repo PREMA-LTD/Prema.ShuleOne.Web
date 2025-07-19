@@ -17,9 +17,10 @@ import { AdmissionFormComponent } from './admission/admission_form/admission-for
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { StudentsStudentRecordsComponent } from './student-records/student-records.component';
 import { ContactInfoComponent } from './student-records/contact_info/contact-info.component';
+import { StudentsAttendanceComponent } from './attendance/attendance.component';
 
 
-const COMPONENTS: any[] = [StudentsAdmissionComponent, StudentsAcademicsComponent, AdmissionFormComponent, StudentsStudentRecordsComponent, ContactInfoComponent];
+const COMPONENTS: any[] = [StudentsAdmissionComponent, StudentsAcademicsComponent, AdmissionFormComponent, StudentsStudentRecordsComponent, ContactInfoComponent, StudentsAttendanceComponent];
 const COMPONENTS_DYNAMIC: any[] = [];
 
 @NgModule({

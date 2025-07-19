@@ -41,6 +41,16 @@
           }
         },
         {
+          "route": "attendance",
+          "name": "attendance",
+          "type": "link",
+          "icon": "checkbox",
+          "permissions": {
+            "only": ["super-admin", "admin"],
+            "redirectTo": "/"
+          }
+        },
+        {
           "route": "academics",
           "name": "academics",
           "type": "link",
@@ -51,7 +61,7 @@
           }
         }
       ]
-    },     
+    },
     {
       "route": "finance",
       "name": "finance",
@@ -83,7 +93,7 @@
           }
         }
       ]
-    },   
+    },
     {
       "route": "messaging/messages",
       "name": "messages",
