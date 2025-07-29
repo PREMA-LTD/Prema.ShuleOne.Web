@@ -18,6 +18,11 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { environment } from '@env/environment';
 import { BASE_URL, httpInterceptorProviders, appInitializerProviders } from '@core';
 
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatIconModule } from '@angular/material/icon';
+
 // Required for AOT compilation
 export function TranslateHttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, 'i18n/', '.json');
@@ -36,9 +41,13 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     ThemeModule,
     SharedModule,
     RoutesModule,
+    MatCardModule,
+    MatButtonModule,
+    MatRadioModule,
+    MatIconModule,
     KeycloakAngularModule,
     ReactiveFormsModule,
-    FormsModule,    
+    FormsModule,
     HttpClientModule,
     HttpClientXsrfModule.withOptions({
       cookieName: '.AspNetCore.Antiforgery.YOUR_TOKEN_NAME',
