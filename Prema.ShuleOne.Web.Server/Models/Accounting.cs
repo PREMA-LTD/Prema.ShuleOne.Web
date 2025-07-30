@@ -200,7 +200,7 @@ namespace Prema.ShuleOne.Web.Server.Models
         public ExpenseSubCategory ExpenseCategories { get; set; }
     }
 
-    public class ExpenseDto : BaseType
+    public class CreateExpenseDto : BaseType
     {
         public string description { get; set; }
         public decimal amount { get; set; }
@@ -213,6 +213,22 @@ namespace Prema.ShuleOne.Web.Server.Models
         public DateTime date_paid { get; set; }
         public DateTime date_created { get; set; } = DateTime.UtcNow;
         public IFormFile recieptRaw { get; set; }
+    }
+    
+    public class ExpenseDetailsDto : BaseType
+    {
+        public string description { get; set; }
+        public decimal amount { get; set; }
+        public string payment_reference { get; set; }
+        public int fk_from_account_id { get; set; }
+        public int fk_to_account_id { get; set; }
+        public int? fk_transaction_id { get; set; }
+        public string expense_subcategory { get; set; }
+        public string expense_category { get; set; }
+        public string paid_by { get; set; }
+        public DateTime date_paid { get; set; }
+        public DateTime date_created { get; set; } = DateTime.UtcNow;
+        public string recieptRaw { get; set; }
     }
 
 

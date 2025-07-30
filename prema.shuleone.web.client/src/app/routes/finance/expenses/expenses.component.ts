@@ -7,7 +7,7 @@ import { finalize } from 'rxjs';
 import { Student } from 'app/models/student.model';
 import { KeycloakService } from 'keycloak-angular';
 import { FinanceMpesaStkPushComponent } from 'app/routes/finance/mpesa-stk-push/mpesa-stk-push.component';
-import { Expense } from 'app/models/finance.model';
+import {Expense, ExpenseDto} from 'app/models/finance.model';
 import { FinanceService } from 'app/service/finance.service';
 import { AccountingService } from 'app/service/accounting.service';
 import { ExpenseDetailsComponent } from './expense_details/expense-details.component';
@@ -27,28 +27,37 @@ export class FinanceExpensesComponent implements OnInit {
 
   columns: MtxGridColumn[] = [
     { header: 'Id', field: 'id' },
+    { header: 'Category', field: 'expense_category' },
+    { header: 'Subcategory', field: 'expense_subcategory' },
     { header: 'Amount', field: 'amount' },
     { header: 'Payment Ref', field: 'payment_reference' },
-    { header: 'Date Paid', field: 'date_paid' },
+    {
+      header: 'Date Paid',
+      field: 'date_paid',
+      formatter: (row: any) => {
+        const date = new Date(row.date_paid);
+        return date.toLocaleDateString('en-GB');
+      }
+    },
     {
       header: 'Action',
       field: 'action',
       type: 'button',
-      buttons: [    
+      buttons: [
         {
           text: 'View Details',
           color: 'primary',
           icon: 'phone',
           // iif: (record: any) => record.fk_transaction_status_id !== 1 && (this.keycloakService.isUserInRole("admin") || this.keycloakService.isUserInRole("super-admin")),
           click: (record: any) => this.openExpenseDetails(record)
-        }  
+        }
       ]
     }
   ];
 
   //#region Table Functions
 
-  expenses: Expense[] = [];
+  expenses: ExpenseDto[] = [];
   total = 0;
   isLoading = true;
 
@@ -86,10 +95,10 @@ export class FinanceExpensesComponent implements OnInit {
     this.query.grade = 0;
     this.getExpenses();
   }
-  
+
   async getExpenses() {
     this.isLoading = true;
-    
+
     (await this.accountingService
       .getAllExpensesPaginated(this.query.page, this.query.per_page))
       .pipe(
@@ -103,14 +112,14 @@ export class FinanceExpensesComponent implements OnInit {
         this.isLoading = false;
       });
   }
-  
+
 //#endregion
 
 
   openExpenseDetails(expenseDetails: Expense): void {
     const dialogRef = this.dialog.open(ExpenseDetailsComponent, {
       width: '400px',
-      data: { 
+      data: {
         expenseDetails
       }
     });
@@ -121,13 +130,13 @@ export class FinanceExpensesComponent implements OnInit {
 
       }
     });
-  }  
+  }
 
 
   openNewExpense() {
     const dialogRef = this.dialog.open(AddExpenseComponent, {
       width: '400px',
-      data: { 
+      data: {
         expenseDetails: null
       }
     });

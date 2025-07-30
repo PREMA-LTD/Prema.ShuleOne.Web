@@ -286,14 +286,14 @@ public static class AccountingEndpoints
             .WithOpenApi();
 
         //add expense
-        group.MapPost("/Expense", async Task<Results<Created<ExpenseDto>, NotFound<string>, ProblemHttpResult>>
-            ([FromForm] ExpenseDto expenseDto, ShuleOneDatabaseContext db, IOptionsMonitor<Settings> settings,
+        group.MapPost("/Expense", async Task<Results<Created<CreateExpenseDto>, NotFound<string>, ProblemHttpResult>>
+            ([FromForm] CreateExpenseDto expenseDto, ShuleOneDatabaseContext db, IOptionsMonitor<Settings> settings,
                 IMapper mapper) =>
             {
                 var strategy = db.Database.CreateExecutionStrategy();
 
                 return await strategy.ExecuteAsync(async
-                    Task<Results<Created<ExpenseDto>, NotFound<string>, ProblemHttpResult>> () =>
+                    Task<Results<Created<CreateExpenseDto>, NotFound<string>, ProblemHttpResult>> () =>
                 {
                     await using var trx = await db.Database.BeginTransactionAsync();
 
@@ -402,7 +402,7 @@ public static class AccountingEndpoints
                         await db.SaveChangesAsync();
                         await trx.CommitAsync();
 
-                        return TypedResults.Created($"/api/Finance/{expense.id}", mapper.Map<ExpenseDto>(expense));
+                        return TypedResults.Created($"/api/Finance/{expense.id}", mapper.Map<CreateExpenseDto>(expense));
                     }
                     catch (Exception ex) when (IsTransactionRelated(ex))
                     {
@@ -427,10 +427,37 @@ public static class AccountingEndpoints
             {
                 var allExpensesCount = 0;
 
-                var query = db.Expenses
-                    .AsNoTracking()
-                    .OrderBy(c => c.id)
-                    .AsQueryable();
+                // Projection to DTO
+                // var query = db.Expenses
+                //     .AsNoTracking()
+                //     .OrderBy(c => c.id)
+                //     .AsQueryable();
+                
+                var query = from expense in db.Expenses.AsNoTracking()
+                    join subcategory in db.ExpensesSubcategory
+                        on expense.fk_expense_subcategory_id equals subcategory.id into subcatGroup
+                    from subcategory in subcatGroup.DefaultIfEmpty()
+                    join category in db.ExpensesCategory
+                        on subcategory.fk_expense_category_id equals category.id into catGroup
+                    from category in catGroup.DefaultIfEmpty()
+                    orderby expense.id
+                    select new ExpenseDetailsDto
+                    {
+                        id = expense.id,
+                        description = expense.description,
+                        amount = expense.amount,
+                        payment_reference = expense.payment_reference,
+                        fk_from_account_id = expense.fk_from_account_id,
+                        fk_to_account_id = expense.fk_to_account_id,
+                        fk_transaction_id = expense.fk_transaction_id,
+                        expense_subcategory = subcategory != null ? subcategory.name : null,
+                        expense_category = category != null ? category.name : null,
+                        paid_by = expense.paid_by,
+                        date_paid = expense.date_paid,
+                        date_created = expense.date_created,
+                        recieptRaw = expense.reciept // now works if it's a string like a file path
+                    };
+
 
                 // Apply filters dynamically based on the provided parameters
                 // TODO
@@ -438,7 +465,7 @@ public static class AccountingEndpoints
                 // Count the total records for pagination
                 allExpensesCount = await query.CountAsync();
 
-                // Apply pagination and projection to DTO
+                // Apply pagination
                 var allExpenses = await query
                     .Skip(pageNumber * pageSize)
                     .Take(pageSize)

@@ -41,7 +41,7 @@ export interface Revenue {
 
   export interface ExpensePagination {
     total: number;
-    expenses: Expense[];
+    expenses: ExpenseDto[];
   }
 
   export interface ExpenseDto {
@@ -59,6 +59,8 @@ export interface Revenue {
     date_paid: Date | string;
     date_created: Date | string;
     recieptRaw?: File;
+    expense_category: string;
+    expense_subcategory: string;
   }
 
 

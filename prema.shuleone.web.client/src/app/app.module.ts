@@ -32,6 +32,7 @@ import { LoginService } from '@core/authentication/login.service';
 import { FakeLoginService } from './fake-login.service';
 import { KeycloakAngularModule } from 'keycloak-angular';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
   declarations: [AppComponent],
@@ -49,6 +50,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     ReactiveFormsModule,
     FormsModule,
     HttpClientModule,
+    CommonModule,
     HttpClientXsrfModule.withOptions({
       cookieName: '.AspNetCore.Antiforgery.YOUR_TOKEN_NAME',
       headerName: 'X-XSRF-TOKEN'
