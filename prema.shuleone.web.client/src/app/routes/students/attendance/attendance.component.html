@@ -1,0 +1,94 @@
+<page-header></page-header>
+<div class="attendance-container">
+  <!-- Header Section -->
+  <div class="attendance-header">
+    <h2>Student Attendance</h2>
+
+    <!-- Summary Stats -->
+    <div class="attendance-summary">
+      <mat-card class="summary-card present">
+        <mat-card-content>
+          <div class="summary-content">
+            <mat-icon>check_circle</mat-icon>
+            <div>
+              <span class="count">{{ getPresentCount() }}</span>
+              <span class="label">Present</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card absent">
+        <mat-card-content>
+          <div class="summary-content">
+            <mat-icon>cancel</mat-icon>
+            <div>
+              <span class="count">{{ getAbsentCount() }}</span>
+              <span class="label">Absent</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Actions -->
+    <div class="attendance-actions">
+      <button mat-raised-button color="primary" (click)="setAllPresent()">
+        <mat-icon>done_all</mat-icon>
+        Set All Present
+      </button>
+    </div>
+  </div>
+
+  <!-- Students List -->
+  <mat-card class="students-card">
+    <mat-card-header>
+      <mat-card-title>Students List</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="attendance-table">
+        <!-- Table Header -->
+        <div class="table-header">
+          <div class="learner-column">Learners</div>
+          <div class="status-column">Present</div>
+          <div class="status-column">Absent</div>
+        </div>
+
+        <!-- Student Rows -->
+        <div class="student-row" *ngFor="let student of students">
+          <div class="learner-info">
+            <span class="student-name">{{ student.name }}</span>
+            <span class="roll-number">({{ student.rollNumber }})</span>
+          </div>
+
+          <div class="attendance-options">
+            <mat-radio-group
+              [value]="student.attendance"
+              (change)="setAttendance(student.id, $event)"
+              class="attendance-radio-group">
+
+              <div class="radio-option">
+                <mat-radio-button value="present" class="present-radio">
+                </mat-radio-button>
+              </div>
+
+              <div class="radio-option">
+                <mat-radio-button value="absent" class="absent-radio">
+                </mat-radio-button>
+              </div>
+            </mat-radio-group>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Save Button -->
+  <div class="save-section">
+    <button mat-fab extended color="accent" (click)="saveAttendance()" class="save-button">
+      <mat-icon>save</mat-icon>
+      Save Attendance
+    </button>
+  </div>
+</div>
