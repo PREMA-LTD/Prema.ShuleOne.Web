@@ -29,6 +29,7 @@ export class FinanceExpensesComponent implements OnInit {
     { header: 'Id', field: 'id' },
     { header: 'Category', field: 'expense_category' },
     { header: 'Subcategory', field: 'expense_subcategory' },
+    { header: 'Description', field: 'description' },
     { header: 'Amount', field: 'amount' },
     { header: 'Payment Ref', field: 'payment_reference' },
     {
